@@ -73,6 +73,7 @@ Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
   WeatherService.swift       ← Open-Meteo weather + marine API client
+  ExportService.swift        ← CSV, JSON, and report export + import
 ```
 
 ### Step-by-Step Setup
@@ -255,3 +256,14 @@ Services/
 - **Personal Records** — Deepest, longest, coldest, warmest, best visibility, and sites explored
 - **Unit Aware** — All charts respect imperial/metric preference
 - **Stats Integration** — Dive Analytics link on the Stats dashboard
+
+## Features (Phase 18 - Dive Log Export & Backup)
+
+- **CSV Export** — Export dives as CSV for Excel, Numbers, and Google Sheets
+- **JSON Export** — Full JSON backup with share sheet integration
+- **Dive Report** — Formatted text report with all dive details, stats, and ratings
+- **File Import** — Import JSON backups from Files app via document picker
+- **Clipboard Import** — Paste previously exported JSON to restore dives
+- **Merge Import** — Smart import skips duplicate dives, reports new vs existing
+- **Copy to Clipboard** — Quick copy JSON or CSV for pasting elsewhere
+- **Enhanced Data Summary** — Total bottom time and deepest dive stats added
