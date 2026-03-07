@@ -26,11 +26,13 @@ Models/
   GearItem.swift             ← Gear equipment model with service tracking
   Achievement.swift          ← 30 achievement definitions with unlock logic
   DiveBuddy.swift            ← Buddy contact model
+  SiteCondition.swift        ← Site condition report model
 Storage/
   DiveStore.swift            ← Persistence (saves dives as JSON)
   FavoriteSitesStore.swift   ← Favorites & custom dive sites
   GearStore.swift            ← Gear equipment persistence
   BuddyStore.swift           ← Buddy contacts persistence
+  SiteConditionsStore.swift  ← Site condition reports persistence
 Views/
   DiveListView.swift         ← Main dive log list
   DiveDetailView.swift       ← Individual dive details
@@ -69,6 +71,7 @@ Views/
   DivePlanBuilderView.swift  ← Dive plan builder + summary
   DiveTimelineView.swift     ← Calendar heatmap + timeline
   DiveAnalyticsView.swift    ← Swift Charts analytics + personal records
+  SiteConditionsView.swift   ← Site condition reports + add/browse views
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -267,3 +270,14 @@ Services/
 - **Merge Import** — Smart import skips duplicate dives, reports new vs existing
 - **Copy to Clipboard** — Quick copy JSON or CSV for pasting elsewhere
 - **Enhanced Data Summary** — Total bottom time and deepest dive stats added
+
+## Features (Phase 19 - Dive Site Conditions Log)
+
+- **Condition Reports** — Log water temp, visibility, current, surface conditions per site visit
+- **Entry & Exit Notes** — Record entry/exit methods, tips, and site-specific advice
+- **Hazard Tracking** — Document hazards like surge, boat traffic, or marine life risks
+- **Conditions Summary** — Average rating, most common current, report count per site
+- **All Sites Browse** — Browse all sites with logged conditions from the Explore tab
+- **Site Detail Integration** — Access conditions directly from any dive site detail page
+- **Star Ratings** — Rate overall conditions 1-5 stars per visit
+- **Context Menu Delete** — Long-press to delete individual condition reports

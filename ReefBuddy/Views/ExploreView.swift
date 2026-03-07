@@ -40,6 +40,16 @@ struct ExploreView: View {
                         )
                     }
 
+                    // MARK: - Site Conditions
+                    NavigationLink(destination: AllSiteConditionsView()) {
+                        ReferenceCard(
+                            icon: "doc.text.magnifyingglass",
+                            title: "Site Conditions",
+                            subtitle: "Entry/exit notes, currents, and tips",
+                            color: .teal
+                        )
+                    }
+
                     // MARK: - Favorites
                     let favorites = favStore.favoriteSites()
                     if !favorites.isEmpty {

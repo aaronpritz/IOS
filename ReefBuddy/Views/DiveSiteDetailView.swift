@@ -98,6 +98,29 @@ struct DiveSiteDetailView: View {
                 .background(Color(.systemGray6))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
+                // MARK: - Site Conditions
+                NavigationLink(destination: SiteConditionsView(siteName: site.name)) {
+                    HStack {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .font(.title2)
+                            .foregroundStyle(.teal)
+                        VStack(alignment: .leading) {
+                            Text("Site Conditions")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.primary)
+                            Text("Entry/exit notes, currents, and tips")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+
                 // MARK: - Weather
                 NavigationLink {
                     DiveWeatherView()
