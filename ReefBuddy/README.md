@@ -67,6 +67,7 @@ Views/
   BuddyPickerField.swift     ← Buddy selector for dive form
   PreDiveChecklistView.swift ← BWRAF safety checklist
   DivePlanBuilderView.swift  ← Dive plan builder + summary
+  DiveTimelineView.swift     ← Calendar heatmap + timeline
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -234,3 +235,11 @@ Services/
 - **Gas Estimation** — Approximate gas consumption based on depth, time, and SAC rate
 - **Plan Summary** — Shareable dive plan with safety reminders (safety stop, ascent rate, turn pressure)
 - **Share & Copy** — Share dive plan via share sheet or copy to clipboard
+
+## Features (Phase 16 - Dive Timeline)
+
+- **Year Heatmap** — 12-month grid showing dive frequency with color-coded intensity
+- **Month Calendar** — Interactive calendar with dive day indicators and month navigation
+- **Timeline List** — Chronological dive list for selected month with depth, time, buddy, and rating
+- **Drill Down** — Tap any dive in the timeline to navigate to full dive details
+- **Stats Integration** — Dive Timeline link on the Stats dashboard

@@ -100,6 +100,30 @@ struct StatsView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
 
+                    // MARK: - Timeline
+                    NavigationLink(destination: DiveTimelineView()) {
+                        HStack {
+                            Image(systemName: "calendar")
+                                .font(.title3)
+                                .foregroundStyle(.cyan)
+                                .frame(width: 30)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Dive Timeline")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.primary)
+                                Text("Calendar view of all your dives")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+
                     // MARK: - Recent Dives Preview
                     if !store.dives.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
