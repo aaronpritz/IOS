@@ -5,6 +5,13 @@ struct ReefBuddyApp: App {
     @StateObject private var store = DiveStore()
     @StateObject private var units = UnitSettings()
     @StateObject private var favStore = FavoriteSitesStore()
+    @AppStorage("rapidAPIKey") private var apiKey = ""
+
+    init() {
+        // Load saved API key on startup
+        let savedKey = UserDefaults.standard.string(forKey: "rapidAPIKey") ?? ""
+        DiveSiteAPIService.apiKey = savedKey
+    }
 
     var body: some Scene {
         WindowGroup {

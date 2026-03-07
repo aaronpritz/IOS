@@ -41,12 +41,16 @@ Views/
   WeightCalculatorView.swift ← Dive weight estimator
   ExploreView.swift          ← Explore hub (sites + sharing)
   AddCustomSiteView.swift    ← Add user dive sites
+  DiveMapView.swift          ← Interactive MapKit dive map
+  OnlineSiteSearchView.swift ← Online API site search
   DiveSiteDirectoryView.swift ← Dive site directory
   DiveSiteDetailView.swift   ← Individual dive site details
   ShareDiveView.swift        ← Share/export dive logs
   CertificationView.swift   ← Certification tracker
   DataManagementView.swift   ← Export/import dive data
   SettingsView.swift         ← Settings & profile
+Services/
+  DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
 ```
 
 ### Step-by-Step Setup
@@ -90,7 +94,7 @@ Views/
 
 ## Features (Phase 4 - Explore & Share)
 
-- **Dive Site Directory** — 12 world-class dive sites across 5 regions (Caribbean, Southeast Asia, Pacific, Red Sea, Americas) with detailed info: depth, difficulty, water temp, visibility, best months, and highlights
+- **Dive Site Directory** — 87 world-class dive sites across 7 regions (Caribbean, Southeast Asia, Pacific, Red Sea, Americas, Mediterranean, Indian Ocean) with GPS coordinates, depth, difficulty, water temp, visibility, best months, and highlights
 - **Site Detail Pages** — Full descriptions, quick-fact cards, and highlight lists for each dive site
 - **Share Dive Logs** — Beautiful share card preview with dive stats, export via share sheet or copy to clipboard
 - **Explore Hub** — Browse sites by region, share recent dives, and discover new destinations
@@ -111,3 +115,12 @@ Views/
 - **Favorite Sites** — Heart button to bookmark dive sites from the directory
 - **Custom Dive Sites** — Add your own dive sites with full details to the directory
 - **Data Export/Import** — JSON backup/restore via share sheet or clipboard for data portability
+
+## Features (Phase 6 - Online & Maps)
+
+- **Interactive Dive Map** — MapKit-powered world map with all 87+ dive sites pinned with colored markers by region. Filter by region, tap pins for site details
+- **GPS Coordinates** — Every dive site includes real-world latitude/longitude for map display
+- **Expanded Directory** — 87 curated sites (up from 12) across 7 regions including Mediterranean and Indian Ocean
+- **Online Site Search** — Connect to the World Scuba Diving Sites API (15,000+ sites) to search by country and add results to your local directory
+- **API Integration** — Optional RapidAPI key in Settings enables online search; app works fully offline without it
+- **Region Filters** — Filter the map and directory by Caribbean, Southeast Asia, Pacific, Red Sea, Americas, Mediterranean, or Indian Ocean

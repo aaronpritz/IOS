@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var units: UnitSettings
+    @AppStorage("rapidAPIKey") private var apiKey = ""
 
     var body: some View {
         NavigationStack {
@@ -45,10 +46,21 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    SecureField("RapidAPI Key", text: $apiKey)
+                        .onChange(of: apiKey) { _, newValue in
+                            DiveSiteAPIService.apiKey = newValue
+                        }
+                } header: {
+                    Label("Online Dive Sites API", systemImage: "globe")
+                } footer: {
+                    Text("Optional. Get a free key from rapidapi.com to search 15,000+ dive sites online.")
+                }
+
+                Section {
                     HStack {
                         Text("Version")
                         Spacer()
-                        Text("2.0.0")
+                        Text("2.1.0")
                             .foregroundStyle(.secondary)
                     }
                 } header: {

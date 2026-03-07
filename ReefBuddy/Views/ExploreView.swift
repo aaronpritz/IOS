@@ -10,13 +10,33 @@ struct ExploreView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    // MARK: - Dive Sites
-                    NavigationLink(destination: DiveSiteDirectoryView()) {
+                    // MARK: - Dive Map
+                    NavigationLink(destination: DiveMapView()) {
                         ReferenceCard(
                             icon: "map.fill",
-                            title: "Dive Sites",
+                            title: "Dive Map",
+                            subtitle: "\(DiveSite.allSites.count) sites on an interactive map",
+                            color: .blue
+                        )
+                    }
+
+                    // MARK: - Dive Sites Directory
+                    NavigationLink(destination: DiveSiteDirectoryView()) {
+                        ReferenceCard(
+                            icon: "list.bullet",
+                            title: "Site Directory",
                             subtitle: "\(DiveSite.allSites.count + favStore.customSites.count) sites worldwide",
                             color: .cyan
+                        )
+                    }
+
+                    // MARK: - Online Search
+                    NavigationLink(destination: OnlineSiteSearchView()) {
+                        ReferenceCard(
+                            icon: "globe",
+                            title: "Online Search",
+                            subtitle: "Search 15,000+ sites by country",
+                            color: .green
                         )
                     }
 
@@ -213,6 +233,8 @@ struct ExploreView: View {
         case .pacific: return "🌊"
         case .redSea: return "🐫"
         case .americas: return "🗽"
+        case .mediterranean: return "🏛"
+        case .indianOcean: return "🐋"
         }
     }
 }
