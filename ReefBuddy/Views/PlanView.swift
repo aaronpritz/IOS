@@ -67,6 +67,15 @@ struct PlanView: View {
                             color: .purple
                         )
                     }
+
+                    NavigationLink(destination: TrainingView()) {
+                        ReferenceCard(
+                            icon: "figure.water.fitness",
+                            title: "Skills Tracker",
+                            subtitle: "Track dive skills practice and progress",
+                            color: .mint
+                        )
+                    }
                 }
                 .padding()
             }

@@ -27,12 +27,14 @@ Models/
   Achievement.swift          ← 30 achievement definitions with unlock logic
   DiveBuddy.swift            ← Buddy contact model
   SiteCondition.swift        ← Site condition report model
+  TrainingSkill.swift        ← Dive skill model with practice tracking
 Storage/
   DiveStore.swift            ← Persistence (saves dives as JSON)
   FavoriteSitesStore.swift   ← Favorites & custom dive sites
   GearStore.swift            ← Gear equipment persistence
   BuddyStore.swift           ← Buddy contacts persistence
   SiteConditionsStore.swift  ← Site condition reports persistence
+  TrainingStore.swift        ← Skills practice persistence
 Views/
   DiveListView.swift         ← Main dive log list
   DiveDetailView.swift       ← Individual dive details
@@ -73,6 +75,7 @@ Views/
   DiveAnalyticsView.swift    ← Swift Charts analytics + personal records
   SiteConditionsView.swift   ← Site condition reports + add/browse views
   DiveFilterSheet.swift      ← Advanced multi-criteria filter sheet
+  TrainingView.swift         ← Skills tracker with practice logging
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -293,3 +296,14 @@ Services/
 - **Notes Search** — Search now includes dive notes in addition to site, location, and buddy
 - **Quick Filters** — Existing quick filter chips (All, 5 Stars, 4+, Deep, Shallow) still work alongside advanced filters
 - **Unit Aware** — Depth filter respects imperial/metric setting
+
+## Features (Phase 21 - Dive Skills Tracker)
+
+- **28 Default Skills** — Pre-loaded skills across 6 categories: Buoyancy, Navigation, Rescue, Equipment, Photography, Specialty
+- **Practice Logging** — Log each practice session with confidence level (Learning/Improving/Comfortable/Confident) and notes
+- **Progress Tracking** — Per-skill progress rings with target practice counts and mastery detection
+- **Skill Detail** — Full practice history with confidence indicators and date tracking
+- **Overall Progress** — Summary card with mastered count, total practices, and completion percentage
+- **Custom Skills** — Add your own skills with custom category and target practice count
+- **Category Grouping** — Skills organized by category with per-category mastery counts
+- **Plan Integration** — Skills Tracker accessible from the Plan tab
