@@ -65,6 +65,8 @@ Views/
   AchievementsView.swift     ← Achievement badge grid + progress
   BuddyListView.swift        ← Buddy list, detail, and add/edit views
   BuddyPickerField.swift     ← Buddy selector for dive form
+  PreDiveChecklistView.swift ← BWRAF safety checklist
+  DivePlanBuilderView.swift  ← Dive plan builder + summary
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -221,3 +223,14 @@ Services/
 - **Buddy Detail** — Avatar with initials, contact info, dive stats, and shared dive list
 - **iPad Sidebar** — Buddies section in iPad sidebar under Equipment
 - **Settings Access** — Dive Buddies link in Settings > Profile & Data on iPhone
+
+## Features (Phase 15 - Pre-Dive Safety & Dive Plan Builder)
+
+- **BWRAF Buddy Check** — Complete pre-dive safety checklist following the BWRAF protocol (BCD, Weights, Releases, Air, Final)
+- **Emergency Prep** — Emergency contact, O₂ kit location, first aid, communication plan checks
+- **Progress Ring** — Visual completion tracker with "All Clear — Safe to Dive!" confirmation
+- **Dive Plan Builder** — Plan a dive with site, depth, time, gas mix, entry type, and buddy
+- **No-Deco Limits** — Real-time NDL checking with warnings when plan exceeds limits
+- **Gas Estimation** — Approximate gas consumption based on depth, time, and SAC rate
+- **Plan Summary** — Shareable dive plan with safety reminders (safety stop, ascent rate, turn pressure)
+- **Share & Copy** — Share dive plan via share sheet or copy to clipboard

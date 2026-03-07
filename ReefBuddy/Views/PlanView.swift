@@ -49,6 +49,24 @@ struct PlanView: View {
                             color: .orange
                         )
                     }
+
+                    NavigationLink(destination: PreDiveChecklistView()) {
+                        ReferenceCard(
+                            icon: "checkmark.shield",
+                            title: "Pre-Dive Safety Check",
+                            subtitle: "BWRAF buddy check + emergency prep",
+                            color: .red
+                        )
+                    }
+
+                    NavigationLink(destination: DivePlanBuilderView()) {
+                        ReferenceCard(
+                            icon: "doc.text.magnifyingglass",
+                            title: "Dive Plan Builder",
+                            subtitle: "Build and share a complete dive plan",
+                            color: .purple
+                        )
+                    }
                 }
                 .padding()
             }
