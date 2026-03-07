@@ -3,6 +3,8 @@ import SwiftUI
 struct ExploreView: View {
     @EnvironmentObject var store: DiveStore
     @EnvironmentObject var units: UnitSettings
+    @EnvironmentObject var favStore: FavoriteSitesStore
+    @State private var showingAddSite = false
 
     var body: some View {
         NavigationStack {
@@ -13,9 +15,112 @@ struct ExploreView: View {
                         ReferenceCard(
                             icon: "map.fill",
                             title: "Dive Sites",
-                            subtitle: "\(DiveSite.allSites.count) popular sites worldwide",
+                            subtitle: "\(DiveSite.allSites.count + favStore.customSites.count) sites worldwide",
                             color: .cyan
                         )
+                    }
+
+                    // MARK: - Favorites
+                    let favorites = favStore.favoriteSites()
+                    if !favorites.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label("Favorites", systemImage: "heart.fill")
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                                .padding(.horizontal, 4)
+
+                            ForEach(favorites) { site in
+                                NavigationLink(destination: DiveSiteDetailView(site: site)) {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "heart.fill")
+                                            .foregroundStyle(.red)
+                                            .font(.caption)
+                                            .frame(width: 28)
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(site.name)
+                                                .font(.subheadline.bold())
+                                                .foregroundStyle(.primary)
+                                            Text("\(site.location), \(site.country)")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+
+                                        Spacer()
+
+                                        HStack(spacing: 2) {
+                                            Image(systemName: "star.fill")
+                                                .foregroundStyle(.yellow)
+                                                .font(.caption2)
+                                            Text(String(format: "%.1f", site.rating))
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    .padding()
+                                    .background(Color(.systemGray6))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
+                            }
+                        }
+                    }
+
+                    // MARK: - Custom Sites
+                    if !favStore.customSites.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Your Sites")
+                                .font(.headline)
+                                .padding(.horizontal, 4)
+
+                            ForEach(favStore.customSites) { site in
+                                NavigationLink(destination: DiveSiteDetailView(site: site)) {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "mappin.circle.fill")
+                                            .foregroundStyle(.orange)
+                                            .frame(width: 28)
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(site.name)
+                                                .font(.subheadline.bold())
+                                                .foregroundStyle(.primary)
+                                            Text("\(site.location), \(site.country)")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+
+                                        Spacer()
+
+                                        Image(systemName: "chevron.right")
+                                            .foregroundStyle(.secondary)
+                                            .font(.caption)
+                                    }
+                                    .padding()
+                                    .background(Color(.systemGray6))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        favStore.deleteCustomSite(site)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // MARK: - Add Custom Site
+                    Button { showingAddSite = true } label: {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.cyan)
+                            Text("Add Custom Dive Site")
+                                .font(.subheadline.bold())
+                            Spacer()
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     // MARK: - Share Your Dives
@@ -95,6 +200,9 @@ struct ExploreView: View {
                 .padding()
             }
             .navigationTitle("Explore")
+            .sheet(isPresented: $showingAddSite) {
+                AddCustomSiteView()
+            }
         }
     }
 
@@ -113,4 +221,5 @@ struct ExploreView: View {
     ExploreView()
         .environmentObject(DiveStore())
         .environmentObject(UnitSettings())
+        .environmentObject(FavoriteSitesStore())
 }

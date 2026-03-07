@@ -5,6 +5,10 @@ struct AddDiveView: View {
     @EnvironmentObject var units: UnitSettings
     @Environment(\.dismiss) var dismiss
 
+    // Optional dive for edit mode
+    var editingDive: Dive? = nil
+    var isEditing: Bool { editingDive != nil }
+
     @State private var date = Date()
     @State private var location = ""
     @State private var diveSite = ""
@@ -15,6 +19,8 @@ struct AddDiveView: View {
     @State private var buddyName = ""
     @State private var notes = ""
     @State private var rating = 3
+    @State private var currentStrength: Dive.CurrentStrength = .none
+    @State private var entryType: Dive.EntryType = .boat
 
     var body: some View {
         NavigationStack {
@@ -48,6 +54,18 @@ struct AddDiveView: View {
                     Stepper("Visibility: \(visibility) \(units.visibilityUnit)",
                             value: $visibility,
                             in: units.visibilityRange)
+
+                    Picker("Current", selection: $currentStrength) {
+                        ForEach(Dive.CurrentStrength.allCases, id: \.self) { strength in
+                            Text(strength.rawValue).tag(strength)
+                        }
+                    }
+
+                    Picker("Entry", selection: $entryType) {
+                        ForEach(Dive.EntryType.allCases, id: \.self) { entry in
+                            Text(entry.rawValue).tag(entry)
+                        }
+                    }
                 } header: {
                     Label("Conditions", systemImage: "thermometer.medium")
                 }
@@ -78,7 +96,7 @@ struct AddDiveView: View {
                     Label("How was it?", systemImage: "star")
                 }
             }
-            .navigationTitle("Log a Dive")
+            .navigationTitle(isEditing ? "Edit Dive" : "Log a Dive")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -86,7 +104,7 @@ struct AddDiveView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(isEditing ? "Update" : "Save") {
                         saveDive()
                     }
                     .disabled(location.isEmpty || diveSite.isEmpty)
@@ -94,8 +112,21 @@ struct AddDiveView: View {
                 }
             }
             .onAppear {
-                // Set defaults based on current unit system
-                if units.unitSystem == .metric {
+                if let dive = editingDive {
+                    // Populate fields from existing dive
+                    date = dive.date
+                    location = dive.location
+                    diveSite = dive.diveSite
+                    maxDepth = units.toDisplayDepth(dive.maxDepth)
+                    bottomTime = dive.bottomTime
+                    waterTemp = dive.waterTemp.map { units.toDisplayTemp($0) } ?? (units.unitSystem == .imperial ? 77 : 25)
+                    visibility = dive.visibility.map { units.toDisplayVisibility($0) } ?? (units.unitSystem == .imperial ? 30 : 10)
+                    buddyName = dive.buddyName
+                    notes = dive.notes
+                    rating = dive.rating
+                    currentStrength = dive.currentStrength ?? .none
+                    entryType = dive.entryType ?? .boat
+                } else if units.unitSystem == .metric {
                     maxDepth = 10
                     waterTemp = 25
                     visibility = 10
@@ -105,7 +136,8 @@ struct AddDiveView: View {
     }
 
     private func saveDive() {
-        let dive = Dive(
+        var dive = Dive(
+            id: editingDive?.id ?? UUID(),
             date: date,
             location: location,
             diveSite: diveSite,
@@ -115,9 +147,16 @@ struct AddDiveView: View {
             visibility: units.toStoredVisibility(visibility),
             buddyName: buddyName,
             notes: notes,
-            rating: rating
+            rating: rating,
+            currentStrength: currentStrength,
+            entryType: entryType
         )
-        store.addDive(dive)
+
+        if isEditing {
+            store.updateDive(dive)
+        } else {
+            store.addDive(dive)
+        }
         dismiss()
     }
 }

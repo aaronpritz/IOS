@@ -25,10 +25,30 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink(destination: CertificationView()) {
+                        HStack {
+                            Image(systemName: "checkmark.seal.fill")
+                                .foregroundStyle(.cyan)
+                            Text("Certifications")
+                        }
+                    }
+
+                    NavigationLink(destination: DataManagementView()) {
+                        HStack {
+                            Image(systemName: "externaldrive")
+                                .foregroundStyle(.teal)
+                            Text("Data Management")
+                        }
+                    }
+                } header: {
+                    Label("Profile & Data", systemImage: "person.crop.circle")
+                }
+
+                Section {
                     HStack {
                         Text("Version")
                         Spacer()
-                        Text("1.0.0")
+                        Text("2.0.0")
                             .foregroundStyle(.secondary)
                     }
                 } header: {

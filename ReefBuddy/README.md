@@ -20,8 +20,10 @@ Models/
   SafetyItem.swift           ← Safety checklist data
   DiveTable.swift            ← No-deco limit table data
   DiveSite.swift             ← Dive site directory data
+  Certification.swift        ← Certification model
 Storage/
   DiveStore.swift            ← Persistence (saves dives as JSON)
+  FavoriteSitesStore.swift   ← Favorites & custom dive sites
 Views/
   DiveListView.swift         ← Main dive log list
   DiveDetailView.swift       ← Individual dive details
@@ -35,11 +37,16 @@ Views/
   DepthPlannerView.swift     ← No-deco & repetitive dive planner
   GasCalculatorView.swift    ← Air consumption calculator
   GearChecklistView.swift    ← Gear packing checklist
+  NitroxCalculatorView.swift ← Nitrox MOD/EAD calculator
+  WeightCalculatorView.swift ← Dive weight estimator
   ExploreView.swift          ← Explore hub (sites + sharing)
+  AddCustomSiteView.swift    ← Add user dive sites
   DiveSiteDirectoryView.swift ← Dive site directory
   DiveSiteDetailView.swift   ← Individual dive site details
   ShareDiveView.swift        ← Share/export dive logs
-  SettingsView.swift         ← Settings (unit toggle)
+  CertificationView.swift   ← Certification tracker
+  DataManagementView.swift   ← Export/import dive data
+  SettingsView.swift         ← Settings & profile
 ```
 
 ### Step-by-Step Setup
@@ -87,3 +94,20 @@ Views/
 - **Site Detail Pages** — Full descriptions, quick-fact cards, and highlight lists for each dive site
 - **Share Dive Logs** — Beautiful share card preview with dive stats, export via share sheet or copy to clipboard
 - **Explore Hub** — Browse sites by region, share recent dives, and discover new destinations
+
+## Features (Phase 5 - Enhanced Experience)
+
+- **Edit Dives** — Tap the pencil icon on any dive detail to edit all fields
+- **Sort & Filter** — Sort dive list by date, depth, or rating; filter by star rating or depth range
+- **Search** — Search dives by site, location, or buddy name
+- **Dive Numbering** — Auto-numbered dives in chronological order (#1 = first dive)
+- **Dive Profile Chart** — Visual depth profile showing descent, bottom time, safety stop, and ascent
+- **Current & Entry** — Log current strength (None/Mild/Moderate/Strong) and entry type (Shore/Boat/Pier)
+- **Nitrox Calculator** — Calculate MOD, EAD, and ppO2 for enriched air mixes (EAN21–EAN40) with safety warnings
+- **Weight Calculator** — Estimate dive weight based on body weight, suit type, water/tank type, and experience
+- **Monthly Activity Chart** — Bar chart showing dive frequency over the last 6 months
+- **Depth Distribution** — Horizontal bar chart showing how many dives in each depth range
+- **Certification Tracker** — Log certs (OW, AOW, Rescue, Nitrox, etc.) with agency, date, and cert number
+- **Favorite Sites** — Heart button to bookmark dive sites from the directory
+- **Custom Dive Sites** — Add your own dive sites with full details to the directory
+- **Data Export/Import** — JSON backup/restore via share sheet or clipboard for data portability

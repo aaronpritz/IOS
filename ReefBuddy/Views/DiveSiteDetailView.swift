@@ -3,6 +3,7 @@ import SwiftUI
 struct DiveSiteDetailView: View {
     let site: DiveSite
     @EnvironmentObject var units: UnitSettings
+    @EnvironmentObject var favStore: FavoriteSitesStore
 
     var body: some View {
         ScrollView {
@@ -118,6 +119,16 @@ struct DiveSiteDetailView: View {
         }
         .navigationTitle(site.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    favStore.toggleFavorite(site)
+                } label: {
+                    Image(systemName: favStore.isFavorite(site) ? "heart.fill" : "heart")
+                        .foregroundStyle(favStore.isFavorite(site) ? .red : .secondary)
+                }
+            }
+        }
     }
 }
 
@@ -125,5 +136,6 @@ struct DiveSiteDetailView: View {
     NavigationStack {
         DiveSiteDetailView(site: DiveSite.allSites[0])
             .environmentObject(UnitSettings())
+            .environmentObject(FavoriteSitesStore())
     }
 }

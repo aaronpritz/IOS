@@ -15,6 +15,23 @@ struct Dive: Identifiable, Codable {
     var notes: String
     var rating: Int           // 1-5 stars
 
+    // Phase 5 additions
+    var currentStrength: CurrentStrength?
+    var entryType: EntryType?
+
+    enum CurrentStrength: String, Codable, CaseIterable {
+        case none = "None"
+        case mild = "Mild"
+        case moderate = "Moderate"
+        case strong = "Strong"
+    }
+
+    enum EntryType: String, Codable, CaseIterable {
+        case shore = "Shore"
+        case boat = "Boat"
+        case pier = "Pier / Dock"
+    }
+
     var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -36,7 +53,9 @@ struct Dive: Identifiable, Codable {
             visibility: 65,
             buddyName: "Alex",
             notes: "Amazing coral formations and saw a manta ray!",
-            rating: 5
+            rating: 5,
+            currentStrength: .mild,
+            entryType: .boat
         )
     }
 
@@ -52,7 +71,9 @@ struct Dive: Identifiable, Codable {
                 visibility: 65,
                 buddyName: "Alex",
                 notes: "Amazing coral formations and saw a manta ray!",
-                rating: 5
+                rating: 5,
+                currentStrength: .mild,
+                entryType: .boat
             ),
             Dive(
                 date: Date().addingTimeInterval(-86400),
@@ -64,7 +85,9 @@ struct Dive: Identifiable, Codable {
                 visibility: 50,
                 buddyName: "Sam",
                 notes: "Great wreck dive, lots of fish life around the hull.",
-                rating: 4
+                rating: 4,
+                currentStrength: .none,
+                entryType: .shore
             ),
             Dive(
                 date: Date().addingTimeInterval(-172800),
@@ -76,7 +99,9 @@ struct Dive: Identifiable, Codable {
                 visibility: 100,
                 buddyName: "Jordan",
                 notes: "Crystal clear water. Saw a nurse shark resting under a ledge.",
-                rating: 5
+                rating: 5,
+                currentStrength: .moderate,
+                entryType: .boat
             ),
             Dive(
                 date: Date().addingTimeInterval(-604800),
@@ -88,7 +113,9 @@ struct Dive: Identifiable, Codable {
                 visibility: 80,
                 buddyName: "Chris",
                 notes: "Strong current but incredible wall dive with huge fans.",
-                rating: 4
+                rating: 4,
+                currentStrength: .strong,
+                entryType: .boat
             )
         ]
     }

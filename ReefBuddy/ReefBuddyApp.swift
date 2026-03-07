@@ -4,6 +4,7 @@ import SwiftUI
 struct ReefBuddyApp: App {
     @StateObject private var store = DiveStore()
     @StateObject private var units = UnitSettings()
+    @StateObject private var favStore = FavoriteSitesStore()
 
     var body: some Scene {
         WindowGroup {
@@ -40,6 +41,7 @@ struct ReefBuddyApp: App {
             }
             .environmentObject(store)
             .environmentObject(units)
+            .environmentObject(favStore)
             .tint(.cyan)
         }
     }

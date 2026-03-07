@@ -3,6 +3,7 @@ import SwiftUI
 struct DiveDetailView: View {
     let dive: Dive
     @EnvironmentObject var units: UnitSettings
+    @State private var showingEdit = false
 
     var body: some View {
         ScrollView {
@@ -63,6 +64,40 @@ struct DiveDetailView: View {
                     }
                 }
 
+                // MARK: - Conditions
+                if dive.currentStrength != nil || dive.entryType != nil {
+                    HStack(spacing: 12) {
+                        if let current = dive.currentStrength {
+                            HStack(spacing: 6) {
+                                Image(systemName: "wind")
+                                    .foregroundStyle(.cyan)
+                                Text(current.rawValue)
+                                    .font(.subheadline)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color(.systemGray6))
+                            .clipShape(Capsule())
+                        }
+                        if let entry = dive.entryType {
+                            HStack(spacing: 6) {
+                                Image(systemName: entry == .boat ? "sailboat" : (entry == .shore ? "figure.walk" : "rectangle.split.3x1"))
+                                    .foregroundStyle(.teal)
+                                Text(entry.rawValue)
+                                    .font(.subheadline)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color(.systemGray6))
+                            .clipShape(Capsule())
+                        }
+                        Spacer()
+                    }
+                }
+
+                // MARK: - Dive Profile
+                DiveProfileChart(depth: dive.maxDepth, bottomTime: dive.bottomTime)
+
                 // MARK: - Buddy
                 if !dive.buddyName.isEmpty {
                     HStack {
@@ -102,11 +137,103 @@ struct DiveDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                NavigationLink(destination: ShareDiveView(dive: dive)) {
-                    Image(systemName: "square.and.arrow.up")
+                HStack(spacing: 12) {
+                    Button {
+                        showingEdit = true
+                    } label: {
+                        Image(systemName: "pencil")
+                    }
+
+                    NavigationLink(destination: ShareDiveView(dive: dive)) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
                 }
             }
         }
+        .sheet(isPresented: $showingEdit) {
+            AddDiveView(editingDive: dive)
+        }
+    }
+}
+
+// MARK: - Dive Profile Chart
+
+struct DiveProfileChart: View {
+    let depth: Double
+    let bottomTime: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Dive Profile", systemImage: "chart.line.downtrend.xyaxis")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            GeometryReader { geo in
+                let w = geo.size.width
+                let h = geo.size.height
+                let safetyStopDepth: CGFloat = 15 / CGFloat(depth) * h * 0.8
+
+                Path { path in
+                    // Surface start
+                    path.move(to: CGPoint(x: 0, y: 0))
+                    // Descent (first 15% of time)
+                    path.addLine(to: CGPoint(x: w * 0.15, y: h * 0.8))
+                    // Bottom time (15% to 65%)
+                    path.addLine(to: CGPoint(x: w * 0.65, y: h * 0.8))
+                    // Ascent to safety stop (65% to 75%)
+                    path.addLine(to: CGPoint(x: w * 0.75, y: safetyStopDepth))
+                    // Safety stop (75% to 88%)
+                    path.addLine(to: CGPoint(x: w * 0.88, y: safetyStopDepth))
+                    // Final ascent (88% to 100%)
+                    path.addLine(to: CGPoint(x: w, y: 0))
+                }
+                .stroke(
+                    LinearGradient(colors: [.cyan, .blue], startPoint: .leading, endPoint: .trailing),
+                    style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
+                )
+
+                // Fill under curve
+                Path { path in
+                    path.move(to: CGPoint(x: 0, y: 0))
+                    path.addLine(to: CGPoint(x: w * 0.15, y: h * 0.8))
+                    path.addLine(to: CGPoint(x: w * 0.65, y: h * 0.8))
+                    path.addLine(to: CGPoint(x: w * 0.75, y: safetyStopDepth))
+                    path.addLine(to: CGPoint(x: w * 0.88, y: safetyStopDepth))
+                    path.addLine(to: CGPoint(x: w, y: 0))
+                    path.closeSubpath()
+                }
+                .fill(
+                    LinearGradient(colors: [.cyan.opacity(0.3), .blue.opacity(0.1)],
+                                   startPoint: .top, endPoint: .bottom)
+                )
+
+                // Safety stop label
+                Text("SS 15ft/3min")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+                    .position(x: w * 0.815, y: safetyStopDepth - 12)
+
+                // Depth label
+                Text("\(Int(depth)) ft")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.cyan)
+                    .position(x: w * 0.4, y: h * 0.8 + 14)
+            }
+            .frame(height: 100)
+
+            HStack {
+                Text("0 min")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text("\(bottomTime) min")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 

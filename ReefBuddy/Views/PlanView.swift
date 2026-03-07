@@ -23,6 +23,24 @@ struct PlanView: View {
                         )
                     }
 
+                    NavigationLink(destination: NitroxCalculatorView()) {
+                        ReferenceCard(
+                            icon: "aqi.medium",
+                            title: "Nitrox Calculator",
+                            subtitle: "MOD, EAD, and ppO\u{2082} for enriched air",
+                            color: .green
+                        )
+                    }
+
+                    NavigationLink(destination: WeightCalculatorView()) {
+                        ReferenceCard(
+                            icon: "scalemass",
+                            title: "Weight Calculator",
+                            subtitle: "Estimate your dive weight needs",
+                            color: .indigo
+                        )
+                    }
+
                     NavigationLink(destination: GearChecklistView()) {
                         ReferenceCard(
                             icon: "checklist",
