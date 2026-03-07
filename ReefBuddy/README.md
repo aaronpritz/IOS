@@ -30,6 +30,10 @@ Views/
   HandSignalsView.swift      ← Underwater hand signals
   SafetyChecklistView.swift  ← Interactive safety checklists
   DiveTableView.swift        ← No-deco limits lookup
+  PlanView.swift             ← Dive planning hub
+  DepthPlannerView.swift     ← No-deco & repetitive dive planner
+  GasCalculatorView.swift    ← Air consumption calculator
+  GearChecklistView.swift    ← Gear packing checklist
   SettingsView.swift         ← Settings (unit toggle)
 ```
 
@@ -66,7 +70,12 @@ Views/
   - Gear packing checklist
   - Emergency procedures
 
+## Features (Phase 3 - Dive Planning)
+
+- **Dive Planner** — Plan first and second (repetitive) dives with depth/time sliders, surface interval calculator, and adjusted no-deco limits for the second dive
+- **Gas Calculator** — Calculate available bottom time based on tank size (AL63–HP120), start pressure, SAC rate, and depth. Includes Rule of Thirds visualization, turn pressure, and no-deco vs. gas limit comparison
+- **Gear Checklist** — 27 items across 5 categories (Essentials, Exposure, Accessories, Safety, Personal) with progress tracking. Add custom items and reset between trips. Saved locally.
+
 ## Coming Soon
 
-- **Phase 3:** Dive planning (no-deco calculator, gas planning)
 - **Phase 4:** Social features (dive site directory, photo gallery, sharing)
