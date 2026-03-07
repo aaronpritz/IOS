@@ -100,6 +100,30 @@ struct StatsView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
 
+                    // MARK: - Analytics
+                    NavigationLink(destination: DiveAnalyticsView()) {
+                        HStack {
+                            Image(systemName: "chart.xyaxis.line")
+                                .font(.title3)
+                                .foregroundStyle(.teal)
+                                .frame(width: 30)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Dive Analytics")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.primary)
+                                Text("Charts, trends, and personal records")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+
                     // MARK: - Timeline
                     NavigationLink(destination: DiveTimelineView()) {
                         HStack {

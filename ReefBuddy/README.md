@@ -68,6 +68,7 @@ Views/
   PreDiveChecklistView.swift ← BWRAF safety checklist
   DivePlanBuilderView.swift  ← Dive plan builder + summary
   DiveTimelineView.swift     ← Calendar heatmap + timeline
+  DiveAnalyticsView.swift    ← Swift Charts analytics + personal records
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -243,3 +244,14 @@ Services/
 - **Timeline List** — Chronological dive list for selected month with depth, time, buddy, and rating
 - **Drill Down** — Tap any dive in the timeline to navigate to full dive details
 - **Stats Integration** — Dive Timeline link on the Stats dashboard
+
+## Features (Phase 17 - Advanced Dive Analytics)
+
+- **Depth Trend Chart** — Line chart showing max depth over time with Swift Charts
+- **Monthly Frequency** — Bar chart of dive count per month for last 12 months
+- **Water Temperature** — Area + line chart tracking water temperature trends
+- **Duration vs Depth** — Scatter plot color-coded by dive rating showing depth/time relationship
+- **Top Dive Sites** — Horizontal bar chart of most-visited dive sites
+- **Personal Records** — Deepest, longest, coldest, warmest, best visibility, and sites explored
+- **Unit Aware** — All charts respect imperial/metric preference
+- **Stats Integration** — Dive Analytics link on the Stats dashboard
