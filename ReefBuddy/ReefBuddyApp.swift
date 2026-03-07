@@ -18,6 +18,11 @@ struct ReefBuddyApp: App {
                         Label("Stats", systemImage: "chart.bar")
                     }
 
+                ReferenceView()
+                    .tabItem {
+                        Label("Reference", systemImage: "book")
+                    }
+
                 SettingsView()
                     .tabItem {
                         Label("Settings", systemImage: "gearshape")

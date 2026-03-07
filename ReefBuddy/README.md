@@ -16,6 +16,9 @@ ReefBuddyApp.swift          ← Main app entry point
 Models/
   Dive.swift                 ← Dive data model
   UnitSettings.swift         ← Imperial/Metric unit conversions
+  HandSignal.swift           ← Hand signal data
+  SafetyItem.swift           ← Safety checklist data
+  DiveTable.swift            ← No-deco limit table data
 Storage/
   DiveStore.swift            ← Persistence (saves dives as JSON)
 Views/
@@ -23,6 +26,10 @@ Views/
   DiveDetailView.swift       ← Individual dive details
   AddDiveView.swift          ← Form to log a new dive
   StatsView.swift            ← Stats dashboard
+  ReferenceView.swift        ← Reference guide hub
+  HandSignalsView.swift      ← Underwater hand signals
+  SafetyChecklistView.swift  ← Interactive safety checklists
+  DiveTableView.swift        ← No-deco limits lookup
   SettingsView.swift         ← Settings (unit toggle)
 ```
 
@@ -50,8 +57,16 @@ Views/
 - Offline-first — all data saved locally on device
 - Sample dives included to see the app in action immediately
 
+## Features (Phase 2 - Reference Guide)
+
+- **Hand Signals** — 20 underwater signals across 4 categories (Essential, Direction, Status, Marine Life) with expandable cards showing how to signal and when to use each one
+- **Dive Tables** — Interactive no-deco limit lookup with depth slider, color-coded limits, and full reference table
+- **Safety Checklists** — Interactive checklists with progress tracking:
+  - Pre-dive buddy check (BWRAF)
+  - Gear packing checklist
+  - Emergency procedures
+
 ## Coming Soon
 
-- **Phase 2:** Reference guide (hand signals, safety checklists, dive tables)
 - **Phase 3:** Dive planning (no-deco calculator, gas planning)
 - **Phase 4:** Social features (dive site directory, photo gallery, sharing)
