@@ -25,10 +25,12 @@ Models/
   MarineSpecies.swift        ← 52 species database + sighting model
   GearItem.swift             ← Gear equipment model with service tracking
   Achievement.swift          ← 30 achievement definitions with unlock logic
+  DiveBuddy.swift            ← Buddy contact model
 Storage/
   DiveStore.swift            ← Persistence (saves dives as JSON)
   FavoriteSitesStore.swift   ← Favorites & custom dive sites
   GearStore.swift            ← Gear equipment persistence
+  BuddyStore.swift           ← Buddy contacts persistence
 Views/
   DiveListView.swift         ← Main dive log list
   DiveDetailView.swift       ← Individual dive details
@@ -61,6 +63,8 @@ Views/
   AddGearView.swift          ← Add/edit gear form
   iPadSidebarView.swift      ← iPad sidebar navigation layout
   AchievementsView.swift     ← Achievement badge grid + progress
+  BuddyListView.swift        ← Buddy list, detail, and add/edit views
+  BuddyPickerField.swift     ← Buddy selector for dive form
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -207,3 +211,13 @@ Services/
 - **Badge Details** — Tap any badge for name, description, and unlock status
 - **Live Tracking** — Achievements evaluate in real-time against dive log data
 - **Stats Integration** — Achievement progress card on the Stats dashboard
+
+## Features (Phase 14 - Dive Buddy Manager)
+
+- **Buddy Contacts** — Save dive buddies with name, certification level, phone, email, and notes
+- **Favorites** — Star your frequent dive partners for quick access
+- **Buddy Picker** — Select from saved buddies when logging a dive (or type a new name)
+- **Shared History** — View all dives you've done together with a buddy, plus deepest dive stat
+- **Buddy Detail** — Avatar with initials, contact info, dive stats, and shared dive list
+- **iPad Sidebar** — Buddies section in iPad sidebar under Equipment
+- **Settings Access** — Dive Buddies link in Settings > Profile & Data on iPhone

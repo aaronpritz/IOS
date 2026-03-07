@@ -41,6 +41,14 @@ struct SettingsView: View {
                             Text("Data Management")
                         }
                     }
+
+                    NavigationLink(destination: BuddyListView()) {
+                        HStack {
+                            Image(systemName: "person.2.fill")
+                                .foregroundStyle(.blue)
+                            Text("Dive Buddies")
+                        }
+                    }
                 } header: {
                     Label("Profile & Data", systemImage: "person.crop.circle")
                 }

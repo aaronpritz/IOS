@@ -76,7 +76,7 @@ struct AddDiveView: View {
 
                 // MARK: - Buddy & Notes
                 Section {
-                    TextField("Buddy Name", text: $buddyName)
+                    BuddyPickerField(buddyName: $buddyName)
                     TextField("Notes", text: $notes, axis: .vertical)
                         .lineLimit(3...6)
                 } header: {

@@ -6,6 +6,7 @@ struct ReefBuddyApp: App {
     @StateObject private var units = UnitSettings()
     @StateObject private var favStore = FavoriteSitesStore()
     @StateObject private var gearStore = GearStore()
+    @StateObject private var buddyStore = BuddyStore()
     @AppStorage("rapidAPIKey") private var apiKey = ""
 
     init() {
@@ -21,6 +22,7 @@ struct ReefBuddyApp: App {
                 .environmentObject(units)
                 .environmentObject(favStore)
                 .environmentObject(gearStore)
+                .environmentObject(buddyStore)
                 .tint(.cyan)
         }
     }

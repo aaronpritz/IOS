@@ -11,6 +11,7 @@ struct iPadSidebarView: View {
         case weather = "Weather"
         case explore = "Explore"
         case gear = "Gear"
+        case buddies = "Buddies"
         case settings = "Settings"
 
         var icon: String {
@@ -21,6 +22,7 @@ struct iPadSidebarView: View {
             case .weather: return "cloud.sun.fill"
             case .explore: return "globe"
             case .gear: return "bag.fill"
+            case .buddies: return "person.2.fill"
             case .settings: return "gearshape"
             }
         }
@@ -29,7 +31,7 @@ struct iPadSidebarView: View {
             switch self {
             case .dives, .stats, .plan: return .diving
             case .weather, .explore: return .discover
-            case .gear: return .equipment
+            case .gear, .buddies: return .equipment
             case .settings: return .app
             }
         }
@@ -71,6 +73,8 @@ struct iPadSidebarView: View {
                     ExploreView()
                 case .gear:
                     GearListView()
+                case .buddies:
+                    BuddyListView()
                 case .settings:
                     SettingsView()
                 case nil:
@@ -91,4 +95,5 @@ struct iPadSidebarView: View {
         .environmentObject(UnitSettings())
         .environmentObject(FavoriteSitesStore())
         .environmentObject(GearStore())
+        .environmentObject(BuddyStore())
 }
