@@ -20,11 +20,15 @@ class DiveStore: ObservableObject {
     }
 
     func deleteDive(at offsets: IndexSet) {
+        for index in offsets {
+            PhotoStorage.shared.deletePhotos(for: dives[index].id)
+        }
         dives.remove(atOffsets: offsets)
         saveDives()
     }
 
     func deleteDive(_ dive: Dive) {
+        PhotoStorage.shared.deletePhotos(for: dive.id)
         dives.removeAll { $0.id == dive.id }
         saveDives()
     }

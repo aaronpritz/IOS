@@ -49,8 +49,10 @@ Views/
   CertificationView.swift   ← Certification tracker
   DataManagementView.swift   ← Export/import dive data
   SettingsView.swift         ← Settings & profile
+  DivePhotoPicker.swift      ← Photo picker (camera + library)
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
+  PhotoStorage.swift         ← Dive photo file storage
 ```
 
 ### Step-by-Step Setup
@@ -124,3 +126,12 @@ Services/
 - **Online Site Search** — Connect to the World Scuba Diving Sites API (15,000+ sites) to search by country and add results to your local directory
 - **API Integration** — Optional RapidAPI key in Settings enables online search; app works fully offline without it
 - **Region Filters** — Filter the map and directory by Caribbean, Southeast Asia, Pacific, Red Sea, Americas, Mediterranean, or Indian Ocean
+
+## Features (Phase 7 - Dive Log Photos)
+
+- **Photo Attachments** — Attach up to 10 photos per dive from camera or photo library
+- **Camera Integration** — Take photos directly from the dive log using the device camera
+- **Photo Library Picker** — Select multiple photos at once using the iOS PhotosPicker
+- **Photo Gallery** — Scrollable horizontal photo gallery on each dive's detail page
+- **Photo Management** — Remove individual photos from a dive; photos auto-delete when dives are deleted
+- **Local Storage** — Photos saved as compressed JPEGs in the app's documents directory

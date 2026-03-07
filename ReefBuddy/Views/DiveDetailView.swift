@@ -64,6 +64,32 @@ struct DiveDetailView: View {
                     }
                 }
 
+                // MARK: - Photos
+                if let photos = dive.photoFilenames, !photos.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Photos (\(photos.count))", systemImage: "photo.on.rectangle.angled")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(photos, id: \.self) { filename in
+                                    if let image = PhotoStorage.shared.loadPhoto(filename) {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 160, height: 120)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+
                 // MARK: - Conditions
                 if dive.currentStrength != nil || dive.entryType != nil {
                     HStack(spacing: 12) {

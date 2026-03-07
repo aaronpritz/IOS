@@ -19,6 +19,9 @@ struct Dive: Identifiable, Codable {
     var currentStrength: CurrentStrength?
     var entryType: EntryType?
 
+    // Phase 7 - Photos
+    var photoFilenames: [String]?
+
     enum CurrentStrength: String, Codable, CaseIterable {
         case none = "None"
         case mild = "Mild"

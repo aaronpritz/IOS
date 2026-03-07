@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct AddDiveView: View {
     @EnvironmentObject var store: DiveStore
@@ -21,6 +22,8 @@ struct AddDiveView: View {
     @State private var rating = 3
     @State private var currentStrength: Dive.CurrentStrength = .none
     @State private var entryType: Dive.EntryType = .boat
+    @State private var photoFilenames: [String] = []
+    @State private var diveID = UUID()
 
     var body: some View {
         NavigationStack {
@@ -95,6 +98,13 @@ struct AddDiveView: View {
                 } header: {
                     Label("How was it?", systemImage: "star")
                 }
+
+                // MARK: - Photos
+                Section {
+                    DivePhotoPicker(photoFilenames: $photoFilenames, diveID: diveID)
+                } header: {
+                    Label("Dive Photos", systemImage: "camera")
+                }
             }
             .navigationTitle(isEditing ? "Edit Dive" : "Log a Dive")
             .toolbar {
@@ -114,6 +124,7 @@ struct AddDiveView: View {
             .onAppear {
                 if let dive = editingDive {
                     // Populate fields from existing dive
+                    diveID = dive.id
                     date = dive.date
                     location = dive.location
                     diveSite = dive.diveSite
@@ -126,6 +137,7 @@ struct AddDiveView: View {
                     rating = dive.rating
                     currentStrength = dive.currentStrength ?? .none
                     entryType = dive.entryType ?? .boat
+                    photoFilenames = dive.photoFilenames ?? []
                 } else if units.unitSystem == .metric {
                     maxDepth = 10
                     waterTemp = 25
@@ -137,7 +149,7 @@ struct AddDiveView: View {
 
     private func saveDive() {
         var dive = Dive(
-            id: editingDive?.id ?? UUID(),
+            id: diveID,
             date: date,
             location: location,
             diveSite: diveSite,
@@ -149,7 +161,8 @@ struct AddDiveView: View {
             notes: notes,
             rating: rating,
             currentStrength: currentStrength,
-            entryType: entryType
+            entryType: entryType,
+            photoFilenames: photoFilenames.isEmpty ? nil : photoFilenames
         )
 
         if isEditing {
