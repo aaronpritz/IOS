@@ -24,6 +24,7 @@ Models/
   DiveWeather.swift          ← Weather & marine condition models
   MarineSpecies.swift        ← 52 species database + sighting model
   GearItem.swift             ← Gear equipment model with service tracking
+  Achievement.swift          ← 30 achievement definitions with unlock logic
 Storage/
   DiveStore.swift            ← Persistence (saves dives as JSON)
   FavoriteSitesStore.swift   ← Favorites & custom dive sites
@@ -59,6 +60,7 @@ Views/
   GearListView.swift         ← Gear list, detail, and service alerts
   AddGearView.swift          ← Add/edit gear form
   iPadSidebarView.swift      ← iPad sidebar navigation layout
+  AchievementsView.swift     ← Achievement badge grid + progress
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -195,3 +197,13 @@ Services/
 - **NavigationSplitView** — Native iPad split view with sidebar + detail pane
 - **Full Reuse** — All existing views work in both layouts without modification
 - **Size Class Detection** — Uses `horizontalSizeClass` environment to detect iPad vs iPhone
+
+## Features (Phase 13 - Achievements & Badges)
+
+- **30 Achievements** — Unlockable badges across 6 categories
+- **Categories** — Milestones, Depth, Exploration, Dedication, Wildlife, Social
+- **Progress Ring** — Visual progress indicator showing unlock percentage
+- **Badge Grid** — 3-column grid with locked/unlocked visual states
+- **Badge Details** — Tap any badge for name, description, and unlock status
+- **Live Tracking** — Achievements evaluate in real-time against dive log data
+- **Stats Integration** — Achievement progress card on the Stats dashboard

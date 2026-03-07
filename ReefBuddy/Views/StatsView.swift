@@ -67,6 +67,39 @@ struct StatsView: View {
                         DepthDistributionChart(dives: store.dives, units: units)
                     }
 
+                    // MARK: - Achievements
+                    NavigationLink(destination: AchievementsView()) {
+                        HStack {
+                            ZStack {
+                                Circle()
+                                    .stroke(Color(.systemGray4), lineWidth: 4)
+                                    .frame(width: 44, height: 44)
+                                Circle()
+                                    .trim(from: 0, to: CGFloat(Achievement.all.filter { $0.isUnlocked(dives: store.dives) }.count) / CGFloat(Achievement.all.count))
+                                    .stroke(Color.cyan, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                                    .frame(width: 44, height: 44)
+                                    .rotationEffect(.degrees(-90))
+                                Text("\(Achievement.all.filter { $0.isUnlocked(dives: store.dives) }.count)")
+                                    .font(.caption.bold())
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Achievements")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.primary)
+                                Text("\(Achievement.all.filter { $0.isUnlocked(dives: store.dives) }.count) of \(Achievement.all.count) unlocked")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+
                     // MARK: - Recent Dives Preview
                     if !store.dives.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
