@@ -10,6 +10,7 @@ struct ReefBuddyApp: App {
     @StateObject private var conditionsStore = SiteConditionsStore()
     @StateObject private var trainingStore = TrainingStore()
     @AppStorage("rapidAPIKey") private var apiKey = ""
+    @State private var showSplash = true
 
     init() {
         // Load saved API key on startup
@@ -19,15 +20,30 @@ struct ReefBuddyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AdaptiveRootView()
-                .environmentObject(store)
-                .environmentObject(units)
-                .environmentObject(favStore)
-                .environmentObject(gearStore)
-                .environmentObject(buddyStore)
-                .environmentObject(conditionsStore)
-                .environmentObject(trainingStore)
-                .tint(.cyan)
+            ZStack {
+                AdaptiveRootView()
+                    .environmentObject(store)
+                    .environmentObject(units)
+                    .environmentObject(favStore)
+                    .environmentObject(gearStore)
+                    .environmentObject(buddyStore)
+                    .environmentObject(conditionsStore)
+                    .environmentObject(trainingStore)
+                    .tint(.cyan)
+
+                if showSplash {
+                    SplashScreenView()
+                        .transition(.opacity)
+                        .zIndex(1)
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.3) {
+                                withAnimation {
+                                    showSplash = false
+                                }
+                            }
+                        }
+                }
+            }
         }
     }
 }
