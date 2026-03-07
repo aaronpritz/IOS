@@ -23,6 +23,7 @@ struct AddDiveView: View {
     @State private var currentStrength: Dive.CurrentStrength = .none
     @State private var entryType: Dive.EntryType = .boat
     @State private var photoFilenames: [String] = []
+    @State private var speciesSightings: [SpeciesSighting] = []
     @State private var diveID = UUID()
 
     var body: some View {
@@ -105,6 +106,13 @@ struct AddDiveView: View {
                 } header: {
                     Label("Dive Photos", systemImage: "camera")
                 }
+
+                // MARK: - Species Sightings
+                Section {
+                    SightingsSection(sightings: $speciesSightings)
+                } header: {
+                    Label("Marine Life", systemImage: "fish.fill")
+                }
             }
             .navigationTitle(isEditing ? "Edit Dive" : "Log a Dive")
             .toolbar {
@@ -138,6 +146,7 @@ struct AddDiveView: View {
                     currentStrength = dive.currentStrength ?? .none
                     entryType = dive.entryType ?? .boat
                     photoFilenames = dive.photoFilenames ?? []
+                    speciesSightings = dive.speciesSightings ?? []
                 } else if units.unitSystem == .metric {
                     maxDepth = 10
                     waterTemp = 25
@@ -162,7 +171,8 @@ struct AddDiveView: View {
             rating: rating,
             currentStrength: currentStrength,
             entryType: entryType,
-            photoFilenames: photoFilenames.isEmpty ? nil : photoFilenames
+            photoFilenames: photoFilenames.isEmpty ? nil : photoFilenames,
+            speciesSightings: speciesSightings.isEmpty ? nil : speciesSightings
         )
 
         if isEditing {

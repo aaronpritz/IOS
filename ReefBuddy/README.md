@@ -21,6 +21,8 @@ Models/
   DiveTable.swift            ← No-deco limit table data
   DiveSite.swift             ← Dive site directory data
   Certification.swift        ← Certification model
+  DiveWeather.swift          ← Weather & marine condition models
+  MarineSpecies.swift        ← 52 species database + sighting model
 Storage/
   DiveStore.swift            ← Persistence (saves dives as JSON)
   FavoriteSitesStore.swift   ← Favorites & custom dive sites
@@ -51,6 +53,7 @@ Views/
   SettingsView.swift         ← Settings & profile
   DivePhotoPicker.swift      ← Photo picker (camera + library)
   DiveWeatherView.swift      ← Weather conditions display + site picker
+  SpeciesPickerView.swift    ← Marine species catalog + sighting editor
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -149,3 +152,13 @@ Services/
 - **Site Picker** — Searchable dive site selector pulls from the full 87-site directory
 - **Unit Aware** — All temperatures and measurements respect Imperial/Metric setting
 - **Site Detail Integration** — "Check Weather" link on every dive site detail page
+
+## Features (Phase 9 - Species Log)
+
+- **Marine Species Database** — 52 curated species across 8 categories (fish, sharks, mammals, turtles, invertebrates, coral, cephalopods, crustaceans)
+- **Species Sightings** — Log what you saw on each dive with count (1, 2-5, 6-20, 20+, School) and optional notes
+- **Searchable Picker** — Full species catalog organized by category with search
+- **Species Detail** — Tap any species for common name, scientific name, and description
+- **Sighting Chips** — Compact species tags in the dive form with inline editing
+- **Detail View** — Marine life section on dive detail showing all sightings with counts
+- **Edit Support** — Add/remove/modify sightings when editing existing dives

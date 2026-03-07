@@ -22,6 +22,9 @@ struct Dive: Identifiable, Codable {
     // Phase 7 - Photos
     var photoFilenames: [String]?
 
+    // Phase 9 - Species Log
+    var speciesSightings: [SpeciesSighting]?
+
     enum CurrentStrength: String, Codable, CaseIterable {
         case none = "None"
         case mild = "Mild"

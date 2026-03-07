@@ -121,6 +121,44 @@ struct DiveDetailView: View {
                     }
                 }
 
+                // MARK: - Species Sightings
+                if let sightings = dive.speciesSightings, !sightings.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("Marine Life (\(sightings.count))", systemImage: "fish.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        ForEach(sightings) { sighting in
+                            if let species = sighting.species {
+                                HStack(spacing: 10) {
+                                    Image(systemName: species.icon)
+                                        .foregroundStyle(.cyan)
+                                        .frame(width: 22)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(species.commonName)
+                                            .font(.subheadline.bold())
+                                        if let note = sighting.note, !note.isEmpty {
+                                            Text(note)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer()
+                                    Text(sighting.count.rawValue)
+                                        .font(.caption)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(Color.cyan.opacity(0.15))
+                                        .clipShape(Capsule())
+                                }
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+
                 // MARK: - Dive Profile
                 DiveProfileChart(depth: dive.maxDepth, bottomTime: dive.bottomTime)
 
