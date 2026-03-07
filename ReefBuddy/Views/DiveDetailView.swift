@@ -100,6 +100,13 @@ struct DiveDetailView: View {
         }
         .navigationTitle("Dive Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                NavigationLink(destination: ShareDiveView(dive: dive)) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
+        }
     }
 }
 

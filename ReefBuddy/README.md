@@ -19,6 +19,7 @@ Models/
   HandSignal.swift           ← Hand signal data
   SafetyItem.swift           ← Safety checklist data
   DiveTable.swift            ← No-deco limit table data
+  DiveSite.swift             ← Dive site directory data
 Storage/
   DiveStore.swift            ← Persistence (saves dives as JSON)
 Views/
@@ -34,6 +35,10 @@ Views/
   DepthPlannerView.swift     ← No-deco & repetitive dive planner
   GasCalculatorView.swift    ← Air consumption calculator
   GearChecklistView.swift    ← Gear packing checklist
+  ExploreView.swift          ← Explore hub (sites + sharing)
+  DiveSiteDirectoryView.swift ← Dive site directory
+  DiveSiteDetailView.swift   ← Individual dive site details
+  ShareDiveView.swift        ← Share/export dive logs
   SettingsView.swift         ← Settings (unit toggle)
 ```
 
@@ -76,6 +81,9 @@ Views/
 - **Gas Calculator** — Calculate available bottom time based on tank size (AL63–HP120), start pressure, SAC rate, and depth. Includes Rule of Thirds visualization, turn pressure, and no-deco vs. gas limit comparison
 - **Gear Checklist** — 27 items across 5 categories (Essentials, Exposure, Accessories, Safety, Personal) with progress tracking. Add custom items and reset between trips. Saved locally.
 
-## Coming Soon
+## Features (Phase 4 - Explore & Share)
 
-- **Phase 4:** Social features (dive site directory, photo gallery, sharing)
+- **Dive Site Directory** — 12 world-class dive sites across 5 regions (Caribbean, Southeast Asia, Pacific, Red Sea, Americas) with detailed info: depth, difficulty, water temp, visibility, best months, and highlights
+- **Site Detail Pages** — Full descriptions, quick-fact cards, and highlight lists for each dive site
+- **Share Dive Logs** — Beautiful share card preview with dive stats, export via share sheet or copy to clipboard
+- **Explore Hub** — Browse sites by region, share recent dives, and discover new destinations
