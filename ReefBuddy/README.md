@@ -176,3 +176,13 @@ Services/
 - **Gear Tab** — Dedicated tab with equipment organized by category
 - **Retire Equipment** — Mark gear as retired to keep history without cluttering the active list
 - **Add/Edit Forms** — Full gear management with toggleable service schedule and purchase tracking
+
+## Features (Phase 11 - Social Sharing)
+
+- **Styled Dive Cards** — Beautiful gradient cards with dive stats, conditions, species, and rating
+- **4 Card Styles** — Ocean, Sunset, Deep, and Coral color themes
+- **Share as Image** — High-resolution (3x) rendered card image for Instagram, iMessage, etc.
+- **Save to Photos** — One-tap save card image to camera roll
+- **Share as Text** — Plain text dive summary for messaging apps
+- **Copy to Clipboard** — Quick copy of text dive log
+- **Rich Card Content** — Shows depth, time, temp, visibility, conditions, species sightings, buddy, notes, and rating
