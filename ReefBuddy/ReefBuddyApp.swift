@@ -5,6 +5,7 @@ struct ReefBuddyApp: App {
     @StateObject private var store = DiveStore()
     @StateObject private var units = UnitSettings()
     @StateObject private var favStore = FavoriteSitesStore()
+    @StateObject private var gearStore = GearStore()
     @AppStorage("rapidAPIKey") private var apiKey = ""
 
     init() {
@@ -43,9 +44,11 @@ struct ReefBuddyApp: App {
                         Label("Explore", systemImage: "globe")
                     }
 
-                ReferenceView()
+                NavigationStack {
+                    GearListView()
+                }
                     .tabItem {
-                        Label("Reference", systemImage: "book")
+                        Label("Gear", systemImage: "bag.fill")
                     }
 
                 SettingsView()
@@ -56,6 +59,7 @@ struct ReefBuddyApp: App {
             .environmentObject(store)
             .environmentObject(units)
             .environmentObject(favStore)
+            .environmentObject(gearStore)
             .tint(.cyan)
         }
     }

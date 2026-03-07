@@ -23,9 +23,11 @@ Models/
   Certification.swift        ← Certification model
   DiveWeather.swift          ← Weather & marine condition models
   MarineSpecies.swift        ← 52 species database + sighting model
+  GearItem.swift             ← Gear equipment model with service tracking
 Storage/
   DiveStore.swift            ← Persistence (saves dives as JSON)
   FavoriteSitesStore.swift   ← Favorites & custom dive sites
+  GearStore.swift            ← Gear equipment persistence
 Views/
   DiveListView.swift         ← Main dive log list
   DiveDetailView.swift       ← Individual dive details
@@ -54,6 +56,8 @@ Views/
   DivePhotoPicker.swift      ← Photo picker (camera + library)
   DiveWeatherView.swift      ← Weather conditions display + site picker
   SpeciesPickerView.swift    ← Marine species catalog + sighting editor
+  GearListView.swift         ← Gear list, detail, and service alerts
+  AddGearView.swift          ← Add/edit gear form
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -162,3 +166,13 @@ Services/
 - **Sighting Chips** — Compact species tags in the dive form with inline editing
 - **Detail View** — Marine life section on dive detail showing all sightings with counts
 - **Edit Support** — Add/remove/modify sightings when editing existing dives
+
+## Features (Phase 10 - Gear Tracker)
+
+- **Equipment Catalog** — Track all dive gear across 12 categories (regulator, BCD, wetsuit, drysuit, mask, fins, computer, tank, light, camera, weights, accessories)
+- **Service Tracking** — Set service intervals and last service dates with automatic overdue/due-soon alerts
+- **Service Alerts** — Color-coded warnings (red = overdue, orange = due within 30 days, green = good)
+- **Gear Details** — Brand, model, serial number, purchase date, dive count, and notes per item
+- **Gear Tab** — Dedicated tab with equipment organized by category
+- **Retire Equipment** — Mark gear as retired to keep history without cluttering the active list
+- **Add/Edit Forms** — Full gear management with toggleable service schedule and purchase tracking
