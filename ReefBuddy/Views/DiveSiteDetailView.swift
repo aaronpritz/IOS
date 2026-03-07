@@ -98,6 +98,31 @@ struct DiveSiteDetailView: View {
                 .background(Color(.systemGray6))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
+                // MARK: - Weather
+                NavigationLink {
+                    DiveWeatherView()
+                } label: {
+                    HStack {
+                        Image(systemName: "cloud.sun.fill")
+                            .font(.title2)
+                            .foregroundStyle(.cyan)
+                        VStack(alignment: .leading) {
+                            Text("Check Weather")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.primary)
+                            Text("Current conditions at this site")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+
                 // MARK: - Log a Dive Here
                 VStack(spacing: 8) {
                     Image(systemName: "plus.circle")

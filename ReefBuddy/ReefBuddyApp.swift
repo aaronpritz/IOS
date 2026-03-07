@@ -31,6 +31,13 @@ struct ReefBuddyApp: App {
                         Label("Plan", systemImage: "map")
                     }
 
+                NavigationStack {
+                    DiveWeatherView()
+                }
+                    .tabItem {
+                        Label("Weather", systemImage: "cloud.sun.fill")
+                    }
+
                 ExploreView()
                     .tabItem {
                         Label("Explore", systemImage: "globe")

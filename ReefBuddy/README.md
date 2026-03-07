@@ -50,9 +50,11 @@ Views/
   DataManagementView.swift   ← Export/import dive data
   SettingsView.swift         ← Settings & profile
   DivePhotoPicker.swift      ← Photo picker (camera + library)
+  DiveWeatherView.swift      ← Weather conditions display + site picker
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
+  WeatherService.swift       ← Open-Meteo weather + marine API client
 ```
 
 ### Step-by-Step Setup
@@ -135,3 +137,15 @@ Services/
 - **Photo Gallery** — Scrollable horizontal photo gallery on each dive's detail page
 - **Photo Management** — Remove individual photos from a dive; photos auto-delete when dives are deleted
 - **Local Storage** — Photos saved as compressed JPEGs in the app's documents directory
+
+## Features (Phase 8 - Weather & Conditions)
+
+- **Dive Weather Tab** — Dedicated weather tab with real-time conditions for any dive site
+- **Open-Meteo Integration** — Free weather API (no key required) for current weather data worldwide
+- **Marine Conditions** — Wave height, wave period, wave direction, and ocean water temperature
+- **Dive Condition Rating** — Automatic Excellent/Good/Fair/Poor rating based on wind, waves, and weather
+- **Weather Details** — Air temp, humidity, wind speed/direction, UV index, cloud cover, pressure
+- **Smart Dive Tips** — Context-aware recommendations based on current conditions (suit thickness, entry type, UV protection)
+- **Site Picker** — Searchable dive site selector pulls from the full 87-site directory
+- **Unit Aware** — All temperatures and measurements respect Imperial/Metric setting
+- **Site Detail Integration** — "Check Weather" link on every dive site detail page
