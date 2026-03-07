@@ -16,51 +16,71 @@ struct ReefBuddyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            TabView {
-                DiveListView()
-                    .tabItem {
-                        Label("Dives", systemImage: "water.waves")
-                    }
+            AdaptiveRootView()
+                .environmentObject(store)
+                .environmentObject(units)
+                .environmentObject(favStore)
+                .environmentObject(gearStore)
+                .tint(.cyan)
+        }
+    }
+}
 
-                StatsView()
-                    .tabItem {
-                        Label("Stats", systemImage: "chart.bar")
-                    }
+/// Switches between TabView (iPhone) and sidebar NavigationSplitView (iPad)
+struct AdaptiveRootView: View {
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
-                PlanView()
-                    .tabItem {
-                        Label("Plan", systemImage: "map")
-                    }
+    var body: some View {
+        if horizontalSizeClass == .regular {
+            iPadSidebarView()
+        } else {
+            iPhoneTabView()
+        }
+    }
+}
 
-                NavigationStack {
-                    DiveWeatherView()
+/// Tab-based navigation for iPhone
+struct iPhoneTabView: View {
+    var body: some View {
+        TabView {
+            DiveListView()
+                .tabItem {
+                    Label("Dives", systemImage: "water.waves")
                 }
-                    .tabItem {
-                        Label("Weather", systemImage: "cloud.sun.fill")
-                    }
 
-                ExploreView()
-                    .tabItem {
-                        Label("Explore", systemImage: "globe")
-                    }
-
-                NavigationStack {
-                    GearListView()
+            StatsView()
+                .tabItem {
+                    Label("Stats", systemImage: "chart.bar")
                 }
-                    .tabItem {
-                        Label("Gear", systemImage: "bag.fill")
-                    }
 
-                SettingsView()
-                    .tabItem {
-                        Label("Settings", systemImage: "gearshape")
-                    }
+            PlanView()
+                .tabItem {
+                    Label("Plan", systemImage: "map")
+                }
+
+            NavigationStack {
+                DiveWeatherView()
             }
-            .environmentObject(store)
-            .environmentObject(units)
-            .environmentObject(favStore)
-            .environmentObject(gearStore)
-            .tint(.cyan)
+                .tabItem {
+                    Label("Weather", systemImage: "cloud.sun.fill")
+                }
+
+            ExploreView()
+                .tabItem {
+                    Label("Explore", systemImage: "globe")
+                }
+
+            NavigationStack {
+                GearListView()
+            }
+                .tabItem {
+                    Label("Gear", systemImage: "bag.fill")
+                }
+
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape")
+                }
         }
     }
 }

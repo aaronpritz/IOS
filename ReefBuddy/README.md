@@ -58,6 +58,7 @@ Views/
   SpeciesPickerView.swift    ← Marine species catalog + sighting editor
   GearListView.swift         ← Gear list, detail, and service alerts
   AddGearView.swift          ← Add/edit gear form
+  iPadSidebarView.swift      ← iPad sidebar navigation layout
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -186,3 +187,11 @@ Services/
 - **Share as Text** — Plain text dive summary for messaging apps
 - **Copy to Clipboard** — Quick copy of text dive log
 - **Rich Card Content** — Shows depth, time, temp, visibility, conditions, species sightings, buddy, notes, and rating
+
+## Features (Phase 12 - iPad Layout)
+
+- **Adaptive Navigation** — Automatically switches between tab bar (iPhone) and sidebar (iPad)
+- **Sidebar Navigation** — Collapsible sidebar on iPad with sections: Diving, Discover, Equipment, App
+- **NavigationSplitView** — Native iPad split view with sidebar + detail pane
+- **Full Reuse** — All existing views work in both layouts without modification
+- **Size Class Detection** — Uses `horizontalSizeClass` environment to detect iPad vs iPhone
