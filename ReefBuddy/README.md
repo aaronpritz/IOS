@@ -72,6 +72,7 @@ Views/
   DiveTimelineView.swift     ← Calendar heatmap + timeline
   DiveAnalyticsView.swift    ← Swift Charts analytics + personal records
   SiteConditionsView.swift   ← Site condition reports + add/browse views
+  DiveFilterSheet.swift      ← Advanced multi-criteria filter sheet
 Services/
   DiveSiteAPIService.swift   ← World Scuba Diving Sites API client
   PhotoStorage.swift         ← Dive photo file storage
@@ -281,3 +282,14 @@ Services/
 - **Site Detail Integration** — Access conditions directly from any dive site detail page
 - **Star Ratings** — Rate overall conditions 1-5 stars per visit
 - **Context Menu Delete** — Long-press to delete individual condition reports
+
+## Features (Phase 20 - Advanced Search & Filters)
+
+- **Advanced Filter Sheet** — Multi-criteria filtering with date range, depth range, rating, location, buddy, entry type, and current
+- **Content Filters** — Filter dives that have photos, species sightings, or specific notes
+- **Filter Badge** — Active filter count shown on filter button in the dive list toolbar
+- **Result Count** — Shows "X of Y dives" when any filter or search is active
+- **Clear Filters** — Quick reset button to clear all active filters at once
+- **Notes Search** — Search now includes dive notes in addition to site, location, and buddy
+- **Quick Filters** — Existing quick filter chips (All, 5 Stars, 4+, Deep, Shallow) still work alongside advanced filters
+- **Unit Aware** — Depth filter respects imperial/metric setting

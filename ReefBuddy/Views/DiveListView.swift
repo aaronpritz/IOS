@@ -23,6 +23,8 @@ struct DiveListView: View {
     @State private var sortOption: DiveSortOption = .dateNewest
     @State private var filterOption: DiveFilterOption = .all
     @State private var searchText = ""
+    @State private var advancedFilter = DiveFilterCriteria()
+    @State private var showingAdvancedFilter = false
 
     var filteredAndSortedDives: [Dive] {
         var result = store.dives
@@ -32,17 +34,23 @@ struct DiveListView: View {
             result = result.filter {
                 $0.diveSite.localizedCaseInsensitiveContains(searchText) ||
                 $0.location.localizedCaseInsensitiveContains(searchText) ||
-                $0.buddyName.localizedCaseInsensitiveContains(searchText)
+                $0.buddyName.localizedCaseInsensitiveContains(searchText) ||
+                $0.notes.localizedCaseInsensitiveContains(searchText)
             }
         }
 
-        // Filter
+        // Quick filter
         switch filterOption {
         case .all: break
         case .fiveStar: result = result.filter { $0.rating == 5 }
         case .fourPlus: result = result.filter { $0.rating >= 4 }
         case .deep: result = result.filter { $0.maxDepth >= 80 }
         case .shallow: result = result.filter { $0.maxDepth < 40 }
+        }
+
+        // Advanced filter
+        if advancedFilter.isActive {
+            result = result.filter { advancedFilter.matches($0) }
         }
 
         // Sort
@@ -110,6 +118,22 @@ struct DiveListView: View {
                                     .clipShape(Capsule())
                                 }
 
+                                // Advanced filter button
+                                Button {
+                                    showingAdvancedFilter = true
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "line.3.horizontal.decrease.circle\(advancedFilter.isActive ? ".fill" : "")")
+                                        Text(advancedFilter.isActive ? "Filters (\(advancedFilter.activeFilterCount))" : "Filters")
+                                    }
+                                    .font(.caption)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(advancedFilter.isActive ? Color.cyan : Color(.systemGray5))
+                                    .foregroundStyle(advancedFilter.isActive ? .white : .primary)
+                                    .clipShape(Capsule())
+                                }
+
                                 ForEach(DiveFilterOption.allCases, id: \.self) { option in
                                     Button {
                                         withAnimation { filterOption = option }
@@ -132,6 +156,28 @@ struct DiveListView: View {
                             }
                             .padding(.horizontal)
                             .padding(.vertical, 8)
+                        }
+
+                        // Result count when filtered
+                        if advancedFilter.isActive || filterOption != .all || !searchText.isEmpty {
+                            HStack {
+                                Text("\(filteredAndSortedDives.count) of \(store.dives.count) dives")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                if advancedFilter.isActive {
+                                    Spacer()
+                                    Button("Clear Filters") {
+                                        withAnimation {
+                                            advancedFilter.reset()
+                                            filterOption = .all
+                                        }
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.bottom, 4)
                         }
 
                         List {
@@ -165,6 +211,9 @@ struct DiveListView: View {
             }
             .sheet(isPresented: $showingAddDive) {
                 AddDiveView()
+            }
+            .sheet(isPresented: $showingAdvancedFilter) {
+                DiveFilterSheet(criteria: $advancedFilter)
             }
         }
     }
