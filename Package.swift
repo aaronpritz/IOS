@@ -14,7 +14,6 @@ let package = Package(
             bundleIdentifier: "com.reefbuddy.app",
             displayVersion: "1.0.0",
             bundleVersion: "1",
-            appIcon: .asset("AppIcon"),
             supportedDeviceFamilies: [.pad, .phone],
             supportedInterfaceOrientations: [
                 .portrait,
@@ -26,7 +25,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "ReefBuddy",
-            path: "ReefBuddy"
+            path: "ReefBuddy",
+            resources: [
+                .process("Assets.xcassets")
+            ]
         )
     ]
 )
