@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Chen Kong</title>
+<style>
+  :root { --scale: 1; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: #0a0a12;
+    color: #fff;
+    font-family: "Courier New", monospace;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #wrap {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  #game {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: #000;
+    border: 3px solid #2a2a44;
+    box-shadow: 0 0 40px rgba(0, 180, 255, 0.25);
+    max-width: 100%;
+    max-height: 80vh;
+    touch-action: none;
+  }
+  #hint {
+    font-size: 13px;
+    color: #6a6a8a;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  /* On-screen controls for touch devices */
+  #touch {
+    display: none;
+    width: 100%;
+    max-width: 520px;
+    justify-content: space-between;
+    padding: 0 14px;
+  }
+  .pad { display: flex; gap: 12px; }
+  .btn {
+    width: 64px; height: 64px;
+    border-radius: 14px;
+    background: rgba(40, 50, 80, 0.85);
+    border: 2px solid #3a4a7a;
+    color: #cfe8ff;
+    font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none;
+  }
+  .btn:active, .btn.on { background: #2f7fff; color: #fff; }
+  #jump { width: 80px; background: rgba(80,40,60,.85); border-color:#7a3a5a; }
+  @media (pointer: coarse) { #touch { display: flex; } }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="448" height="496"></canvas>
+  <div id="hint">← →  move &nbsp;•&nbsp; ↑  climb &nbsp;•&nbsp; SPACE  jump &nbsp;•&nbsp; ENTER  start</div>
+  <div id="touch">
+    <div class="pad">
+      <div class="btn" data-k="left">◀</div>
+      <div class="btn" data-k="up">▲</div>
+      <div class="btn" data-k="down">▼</div>
+      <div class="btn" data-k="right">▶</div>
+    </div>
+    <div class="pad">
+      <div class="btn" id="jump" data-k="jump">JUMP</div>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+"use strict";
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const W = canvas.width, H = canvas.height;
+ctx.imageSmoothingEnabled = false;
+
+// ---------- Input ----------
+const keys = {};
+const KEYMAP = {
+  ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down",
+  KeyA: "left", KeyD: "right", KeyW: "up", KeyS: "down",
+  Space: "jump", Enter: "start", KeyJ: "jump",
+};
+addEventListener("keydown", e => {
+  const k = KEYMAP[e.code];
+  if (k) { keys[k] = true; e.preventDefault(); }
+});
+addEventListener("keyup", e => {
+  const k = KEYMAP[e.code];
+  if (k) { keys[k] = false; e.preventDefault(); }
+});
+// Touch buttons
+document.querySelectorAll("#touch .btn").forEach(b => {
+  const k = b.dataset.k === "start" ? "start" : b.dataset.k;
+  const on = e => { e.preventDefault(); keys[b.dataset.k] = true; if (b.dataset.k === "jump") keys.start = true; b.classList.add("on"); };
+  const off = e => { e.preventDefault(); keys[b.dataset.k] = false; if (b.dataset.k === "jump") keys.start = false; b.classList.remove("on"); };
+  b.addEventListener("touchstart", on, {passive:false});
+  b.addEventListener("touchend", off, {passive:false});
+  b.addEventListener("touchcancel", off, {passive:false});
+  b.addEventListener("mousedown", on);
+  b.addEventListener("mouseup", off);
+  b.addEventListener("mouseleave", off);
+});
+// Tap canvas to start
+canvas.addEventListener("touchstart", e => { e.preventDefault(); keys.start = true; setTimeout(()=>keys.start=false, 100); }, {passive:false});
+
+// ---------- Tiny sound engine (WebAudio, no files) ----------
+let actx = null;
+function audio() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} }
+  return actx;
+}
+function beep(freq, dur, type="square", vol=0.08) {
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.value = vol;
+  o.connect(g); g.connect(a.destination);
+  const t = a.currentTime;
+  o.start(t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.stop(t + dur);
+}
+const SFX = {
+  jump: () => beep(520, 0.15, "square", 0.07),
+  climb: () => beep(300, 0.05, "triangle", 0.04),
+  hit: () => { beep(160, 0.3, "sawtooth", 0.12); beep(80, 0.4, "sawtooth", 0.1); },
+  point: () => beep(880, 0.08, "square", 0.06),
+  win: () => { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.18,"square",0.08), i*120)); },
+  throw: () => beep(220, 0.12, "sawtooth", 0.05),
+  start: () => { [392,523,659].forEach((f,i)=>setTimeout(()=>beep(f,0.12,"square",0.07), i*100)); },
+};
+
+// ---------- Game constants ----------
+const GRAV = 0.5;
+const RUN = 1.8;
+const JUMP_V = -8.2;
+const TILE = 16;
+
+// Level geometry: platforms are horizontal beams (Donkey-Kong style, slightly sloped feel via steps)
+// Each platform: {x, y, w} ; ladders: {x, y, h}
+// Built bottom-up. y is top surface.
+function buildLevel() {
+  const platforms = [];
+  const ladders = [];
+  // 6 girders
+  const floors = [];
+  const baseY = H - 24;
+  const gap = 76;
+  for (let i = 0; i < 6; i++) {
+    const y = baseY - i * gap;
+    // alternate slight offset so it feels like classic slanted girders
+    floors.push(y);
+    platforms.push({ x: 0, y, w: W, top: true });
+  }
+  // Ladders connecting floors (zig-zag)
+  // floor index 0 = bottom
+  const ladderCols = [
+    [0, 360], [1, 90], [2, 360], [3, 90], [4, 300],
+  ];
+  for (const [fi, x] of ladderCols) {
+    const yTop = floors[fi + 1];
+    const yBot = floors[fi];
+    ladders.push({ x, y: yTop, h: yBot - yTop, bottom: yBot, top: yTop });
+  }
+  // a couple of extra ladders for routes
+  ladders.push({ x: 200, y: floors[1], h: floors[0]-floors[1], bottom: floors[0], top: floors[1] });
+  ladders.push({ x: 230, y: floors[3], h: floors[2]-floors[3], bottom: floors[2], top: floors[3] });
+
+  return { platforms, ladders, floors, baseY };
+}
+let level = buildLevel();
+
+// ---------- Entities ----------
+const player = {
+  x: 40, y: 0, w: 16, h: 20,
+  vx: 0, vy: 0,
+  onGround: false, onLadder: false, climbing: false,
+  facing: 1, walkFrame: 0, alive: true, jumping: false,
+};
+function resetPlayer() {
+  player.x = 30; player.y = level.baseY - player.h;
+  player.vx = 0; player.vy = 0;
+  player.onGround = true; player.onLadder = false; player.climbing = false;
+  player.alive = true; player.jumping = false; player.facing = 1;
+}
+
+// Chen Kong sits top-left, princess top-right
+const kong = { x: 60, y: level.floors[5] - 44, w: 48, h: 44, throwTimer: 90, anim: 0 };
+const goal = { x: W - 70, y: level.floors[5] - 30, w: 22, h: 30 }; // captive
+
+let barrels = [];
+function spawnBarrel() {
+  barrels.push({
+    x: kong.x + kong.w, y: kong.y + kong.h - 14,
+    vx: 1.4, vy: 0, w: 14, h: 14,
+    onLadder: false, floor: 5, rot: 0,
+  });
+  SFX.throw();
+}
+
+// ---------- State machine ----------
+let state = "title"; // title, play, dead, win, gameover
+let score = 0, lives = 3, level_num = 1, bestScore = 0;
+let stateTimer = 0;
+let bonus = 5000;
+
+function startGame() {
+  score = 0; lives = 3; level_num = 1;
+  newLevel();
+  state = "play";
+  SFX.start();
+}
+function newLevel() {
+  level = buildLevel();
+  resetPlayer();
+  barrels = [];
+  kong.throwTimer = 100;
+  bonus = 5000;
+}
+function loseLife() {
+  lives--;
+  SFX.hit();
+  if (lives <= 0) { state = "gameover"; stateTimer = 0; bestScore = Math.max(bestScore, score); }
+  else { state = "dead"; stateTimer = 0; }
+}
+
+// ---------- Helpers ----------
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+function nearLadder(px, py, pw, ph) {
+  for (const l of level.ladders) {
+    if (px + pw/2 > l.x - 2 && px + pw/2 < l.x + 14 + 2 &&
+        py + ph > l.top && py < l.bottom) {
+      return l;
+    }
+  }
+  return null;
+}
+function floorBelow(px, pw, py) {
+  // find nearest platform top at or below feet
+  let best = null;
+  const cx = px + pw/2;
+  for (const p of level.platforms) {
+    if (cx >= p.x && cx <= p.x + p.w) {
+      if (p.y >= py - 4) {
+        if (!best || p.y < best.y) best = p;
+      }
+    }
+  }
+  return best;
+}
+
+// ---------- Update ----------
+function updatePlay() {
+  bonus = Math.max(0, bonus - 1);
+  // ----- Player movement -----
+  const p = player;
+  const lad = nearLadder(p.x, p.y, p.w, p.h);
+
+  // Climbing logic
+  if (lad && (keys.up || keys.down)) {
+    if (!p.climbing && keys.up && p.y + p.h > lad.top + 6) { p.climbing = true; }
+    if (!p.climbing && keys.down && p.onGround && lad.bottom <= p.y + p.h + 6) { p.climbing = true; }
+    else if (!p.climbing && keys.down && p.y + p.h < lad.bottom - 2) { p.climbing = true; }
+  }
+  if (p.climbing) {
+    p.vx = 0; p.vy = 0;
+    p.x = lad.x + 7 - p.w/2;
+    if (keys.up) { p.y -= 1.4; if ((performance.now()|0) % 8 === 0) SFX.climb(); }
+    if (keys.down) { p.y += 1.4; }
+    // snap to top
+    if (p.y + p.h <= lad.top + 2) { p.climbing = false; p.y = lad.top - p.h; p.onGround = true; }
+    // reached bottom
+    if (p.y + p.h >= lad.bottom) { p.y = lad.bottom - p.h; p.climbing = false; p.onGround = true; }
+    // leave ladder sideways
+    if (keys.left || keys.right) {
+      // only release if at a floor
+      const f = level.floors.find(fy => Math.abs((p.y + p.h) - fy) < 6);
+      if (f !== undefined) { p.climbing = false; }
+    }
+  }
+
+  if (!p.climbing) {
+    // horizontal
+    if (keys.left) { p.vx = -RUN; p.facing = -1; }
+    else if (keys.right) { p.vx = RUN; p.facing = 1; }
+    else p.vx = 0;
+    if (p.vx !== 0 && p.onGround) p.walkFrame += 0.2;
+
+    // jump
+    if (keys.jump && p.onGround) { p.vy = JUMP_V; p.onGround = false; p.jumping = true; SFX.jump(); }
+
+    // gravity
+    p.vy += GRAV;
+    if (p.vy > 10) p.vy = 10;
+
+    p.x += p.vx;
+    p.y += p.vy;
+
+    // walls
+    if (p.x < 0) p.x = 0;
+    if (p.x + p.w > W) p.x = W - p.w;
+
+    // floor collision (only when falling)
+    p.onGround = false;
+    if (p.vy >= 0) {
+      const f = floorBelow(p.x, p.w, p.y + p.h - p.vy);
+      if (f && p.y + p.h >= f.y && p.y + p.h <= f.y + 16 + p.vy) {
+        p.y = f.y - p.h; p.vy = 0; p.onGround = true; p.jumping = false;
+      }
+    }
+  }
+
+  // ----- Kong throws barrels -----
+  kong.anim += 0.08;
+  kong.throwTimer--;
+  if (kong.throwTimer <= 0) {
+    spawnBarrel();
+    kong.throwTimer = 110 + Math.random() * 70 - Math.min(60, level_num * 8);
+  }
+
+  // ----- Barrels -----
+  for (const b of barrels) {
+    b.vy += GRAV;
+    if (b.vy > 8) b.vy = 8;
+    b.x += b.vx;
+    b.y += b.vy;
+    b.rot += b.vx * 0.15;
+
+    // floor for barrel
+    const f = floorBelow(b.x, b.w, b.y + b.h - b.vy);
+    if (b.vy >= 0 && f && b.y + b.h >= f.y && b.y + b.h <= f.y + 18 + b.vy) {
+      b.y = f.y - b.h; b.vy = 0;
+    }
+    // bounce off walls -> reverse and drop
+    if (b.x <= 0) { b.x = 0; b.vx = Math.abs(b.vx); }
+    if (b.x + b.w >= W) { b.x = W - b.w; b.vx = -Math.abs(b.vx); }
+
+    // chance to roll down a ladder
+    const bl = nearLadder(b.x, b.y, b.w, b.h);
+    if (bl && Math.abs((b.y + b.h) - bl.top) < 6 && Math.random() < 0.02) {
+      b.vy = 2; b.x = bl.x;
+    }
+    b.dead = b.y > H + 40;
+  }
+  barrels = barrels.filter(b => !b.dead);
+
+  // ----- Collisions -----
+  for (const b of barrels) {
+    if (rectsOverlap(p, b)) {
+      // jumping over barrel scores points
+      if (p.vy < 0 || (p.jumping && p.y + p.h < b.y + 4)) {
+        // landing on top is fine-ish, treat as hit unless clearly above
+      }
+      loseLife();
+      return;
+    }
+    // scoring: jumping just over a barrel
+    if (!b.scored && p.jumping && Math.abs((p.x) - (b.x)) < 18 && p.y + p.h < b.y) {
+      b.scored = true; score += 100; SFX.point();
+    }
+  }
+
+  // ----- Win check -----
+  if (rectsOverlap(p, goal)) {
+    score += bonus + 1000;
+    state = "win"; stateTimer = 0; SFX.win();
+  }
+
+  // fell off bottom
+  if (p.y > H + 30) loseLife();
+}
+
+// ---------- Drawing ----------
+function px(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
+
+function drawGirder(p) {
+  // red girder with rivets
+  px(p.x, p.y, p.w, 10, "#d0263d");
+  px(p.x, p.y, p.w, 2, "#ff5b76");
+  px(p.x, p.y + 8, p.w, 2, "#7a0f20");
+  for (let x = p.x + 6; x < p.x + p.w; x += 22) {
+    px(x, p.y + 4, 3, 3, "#ffd27f");
+  }
+}
+function drawLadder(l) {
+  ctx.fillStyle = "#39c0ff";
+  // rails
+  px(l.x, l.top, 3, l.h, "#39c0ff");
+  px(l.x + 11, l.top, 3, l.h, "#39c0ff");
+  // rungs
+  for (let y = l.top + 4; y < l.bottom - 2; y += 9) {
+    px(l.x, y, 14, 2, "#9fe6ff");
+  }
+}
+
+// Spark — the blue spiky hero (inspired by the uploaded sprite)
+function drawHero(p) {
+  const f = p.facing;
+  ctx.save();
+  ctx.translate(p.x + p.w/2, p.y + p.h/2);
+  ctx.scale(f, 1);
+  ctx.translate(-p.w/2, -p.h/2);
+  const B = "#19b6ff", D = "#0a7bcc", K = "#06263a", WI = "#ffffff";
+  // body blob
+  px(3, 4, 10, 12, B);
+  px(2, 6, 12, 8, B);
+  px(4, 2, 8, 3, B);
+  // spikes
+  px(5, 0, 2, 3, B); px(9, 0, 2, 3, B); px(1, 4, 2, 3, B); px(13, 4, 2, 3, B);
+  // outline-ish shading
+  px(3, 14, 10, 2, D);
+  // eyes
+  px(5, 6, 3, 3, WI); px(9, 6, 3, 3, WI);
+  px(6, 7, 2, 2, K); px(10, 7, 2, 2, K);
+  // smile
+  px(6, 11, 4, 1, K);
+  // legs (walk)
+  const step = (Math.floor(p.walkFrame) % 2 === 0 && p.vx !== 0) ? 1 : 0;
+  px(4, 16, 3, 4 - step, D);
+  px(9, 16, 3, 3 + step, D);
+  ctx.restore();
+}
+
+// Chen Kong — large pixel villain boss (no stereotyping; classic arcade brute)
+function drawKong(k) {
+  const x = k.x, y = k.y;
+  const SK = "#e8b483", SKD = "#c08b5a", HAIR = "#1a1a22", SH = "#33304a", SHD = "#22203a", EYE="#fff", PUP="#111";
+  const raise = Math.sin(k.anim) > 0 ? -4 : 0;
+  // torso (dark suit/gi)
+  px(x+6, y+18, 36, 24, SH);
+  px(x+6, y+18, 36, 3, "#4a466a");
+  px(x+6, y+39, 36, 3, SHD);
+  // belt
+  px(x+6, y+30, 36, 3, "#caa23a");
+  // arms
+  px(x-2, y+20, 8, 14, SH);            // left arm
+  px(x+42, y+20+raise, 8, 14, SH);     // right arm (raises to throw)
+  px(x-3, y+32, 7, 6, SKD);            // left hand
+  px(x+43, y+18+raise, 7, 6, SKD);     // right hand
+  // head
+  px(x+12, y+2, 24, 18, SK);
+  px(x+12, y+2, 24, 2, SKD);
+  // hair (black, neat)
+  px(x+10, y, 28, 6, HAIR);
+  px(x+10, y+4, 4, 8, HAIR);
+  px(x+34, y+4, 4, 8, HAIR);
+  // eyebrows (angry)
+  px(x+15, y+8, 6, 2, HAIR);
+  px(x+27, y+8, 6, 2, HAIR);
+  // eyes
+  px(x+16, y+10, 5, 4, EYE); px(x+27, y+10, 5, 4, EYE);
+  px(x+18, y+11, 2, 2, PUP); px(x+29, y+11, 2, 2, PUP);
+  // mustache / mouth (grimace)
+  px(x+18, y+16, 12, 2, HAIR);
+  // legs
+  px(x+10, y+42, 12, 4, SHD);
+  px(x+26, y+42, 12, 4, SHD);
+}
+
+function drawGoal(g) {
+  // captive friend (pink) calling for help
+  const x=g.x, y=g.y;
+  const P="#ff7fb0", PD="#d65a8a", H="#ffe08a", S="#fff";
+  px(x+4, y+10, 14, 18, P);     // dress
+  px(x+6, y+2, 10, 10, "#ffd9b3"); // head
+  px(x+4, y, 14, 4, H);         // hair
+  px(x+4, y+2, 3, 8, H); px(x+15,y+2,3,8,H);
+  px(x+8, y+5, 2, 2, "#111"); px(x+12, y+5, 2, 2, "#111");
+  px(x+8, y+9, 6, 1, PD);
+  // arm waving
+  const w = Math.sin(performance.now()/150) > 0 ? -3 : 0;
+  px(x+1, y+10+w, 4, 3, "#ffd9b3");
+}
+
+function drawBarrel(b) {
+  ctx.save();
+  ctx.translate(b.x + b.w/2, b.y + b.h/2);
+  ctx.rotate(b.rot);
+  ctx.translate(-b.w/2, -b.h/2);
+  px(0, 1, b.w, b.h-2, "#b5651d");
+  px(0, 1, b.w, 2, "#d98b3a");
+  px(0, b.h-3, b.w, 2, "#7a3f10");
+  px(0, b.h/2-1, b.w, 2, "#5a2f0c");
+  px(b.w/2-1, 0, 2, b.h, "#7a3f10");
+  ctx.restore();
+}
+
+function drawHUD() {
+  ctx.fillStyle = "#fff";
+  ctx.font = "12px 'Courier New', monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("SCORE " + String(score).padStart(6, "0"), 8, 16);
+  ctx.fillStyle = "#39c0ff";
+  ctx.fillText("BONUS " + String(bonus).padStart(4," "), 8, 30);
+  // lives
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#ff7fb0";
+  ctx.fillText("♥".repeat(Math.max(0,lives)), W - 8, 16);
+  ctx.fillStyle = "#fff";
+  ctx.fillText("L-" + level_num, W - 8, 30);
+}
+
+function drawScene() {
+  // background
+  ctx.fillStyle = "#0a0a12";
+  ctx.fillRect(0, 0, W, H);
+  // stars
+  ctx.fillStyle = "#1d1d3a";
+  for (let i = 0; i < 40; i++) {
+    const sx = (i * 97) % W, sy = (i * 53) % (H-40) + 20;
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+  for (const l of level.ladders) drawLadder(l);
+  for (const p of level.platforms) drawGirder(p);
+  drawGoal(goal);
+  drawKong(kong);
+  for (const b of barrels) drawBarrel(b);
+  drawHero(player);
+  drawHUD();
+}
+
+function center(text, y, c="#fff", size=20) {
+  ctx.fillStyle = c;
+  ctx.font = size + "px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(text, W/2, y);
+}
+
+function drawTitle() {
+  ctx.fillStyle = "#0a0a12"; ctx.fillRect(0,0,W,H);
+  // draw kong big in middle
+  ctx.save();
+  ctx.translate(W/2 - 48, 150); ctx.scale(2,2);
+  const k = {x:0,y:0,w:48,h:44,anim: performance.now()/300};
+  drawKong(k);
+  ctx.restore();
+  center("CHEN  KONG", 90, "#39c0ff", 40);
+  center("the barrel-throwing boss", 120, "#6a6a8a", 13);
+  center("starring SPARK ⚡", 138, "#19b6ff", 13);
+  center("Help SPARK climb to the top.", 300, "#cfe8ff", 14);
+  center("Dodge the barrels. Rescue your friend!", 322, "#cfe8ff", 14);
+  if ((performance.now()/500|0) % 2 === 0)
+    center("PRESS ENTER / TAP TO START", 380, "#ffd27f", 16);
+  center("← → move   ↑ climb   SPACE jump", 420, "#4a4a6a", 12);
+  if (bestScore > 0) center("BEST " + bestScore, 450, "#6a6a8a", 12);
+}
+
+function drawDead() {
+  drawScene();
+  ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(0,0,W,H);
+  center("OUCH!", H/2 - 10, "#ff5b76", 32);
+  center(lives + " lives left", H/2 + 20, "#fff", 16);
+}
+function drawWin() {
+  drawScene();
+  ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(0,0,W,H);
+  center("RESCUED!", H/2 - 20, "#ffd27f", 34);
+  center("Next level...", H/2 + 16, "#fff", 16);
+}
+function drawGameOver() {
+  ctx.fillStyle = "#0a0a12"; ctx.fillRect(0,0,W,H);
+  center("GAME OVER", H/2 - 30, "#ff5b76", 38);
+  center("Score  " + score, H/2 + 10, "#fff", 18);
+  center("Best   " + bestScore, H/2 + 36, "#6a6a8a", 14);
+  if ((performance.now()/500|0) % 2 === 0)
+    center("PRESS ENTER TO PLAY AGAIN", H/2 + 80, "#ffd27f", 16);
+}
+
+// ---------- Main loop ----------
+function loop() {
+  switch (state) {
+    case "title":
+      if (keys.start) { startGame(); keys.start = false; }
+      drawTitle();
+      break;
+    case "play":
+      updatePlay();
+      if (state === "play") drawScene();
+      break;
+    case "dead":
+      drawDead();
+      stateTimer++;
+      if (stateTimer > 80) { resetPlayer(); barrels = []; state = "play"; }
+      break;
+    case "win":
+      drawWin();
+      stateTimer++;
+      if (stateTimer > 110) { level_num++; newLevel(); state = "play"; }
+      break;
+    case "gameover":
+      drawGameOver();
+      if (keys.start) { startGame(); keys.start = false; }
+      break;
+  }
+  requestAnimationFrame(loop);
+}
+resetPlayer();
+loop();
+})();
+</script>
+</body>
+</html>
