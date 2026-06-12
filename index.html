@@ -210,7 +210,7 @@ let barrels = [];
 function spawnBarrel() {
   barrels.push({
     x: kong.x + kong.w, y: kong.y + kong.h - 14,
-    vx: 1.4, vy: 0, w: 14, h: 14,
+    vx: 1.4, vy: 0, w: 13, h: 16,
     onLadder: false, floor: 5, rot: 0,
   });
   SFX.throw();
@@ -492,16 +492,28 @@ function drawGoal(g) {
   px(x+1, y+10+w, 4, 3, "#ffd9b3");
 }
 
+// A flying "requirements doc" — a sheet of paper with text lines and a dog-eared corner
 function drawBarrel(b) {
   ctx.save();
   ctx.translate(b.x + b.w/2, b.y + b.h/2);
-  ctx.rotate(b.rot);
+  ctx.rotate(b.rot * 0.5);
   ctx.translate(-b.w/2, -b.h/2);
-  px(0, 1, b.w, b.h-2, "#b5651d");
-  px(0, 1, b.w, 2, "#d98b3a");
-  px(0, b.h-3, b.w, 2, "#7a3f10");
-  px(0, b.h/2-1, b.w, 2, "#5a2f0c");
-  px(b.w/2-1, 0, 2, b.h, "#7a3f10");
+  const PAPER = "#f6f3e7", EDGE = "#cfc8a8", INK = "#5a6b8c", RED = "#d0263d";
+  // page body
+  px(1, 0, b.w-2, b.h, PAPER);
+  px(1, 0, b.w-2, 1, "#ffffff");
+  px(0, 1, 1, b.h-2, EDGE);
+  px(b.w-1, 1, 1, b.h-2, EDGE);
+  px(1, b.h-1, b.w-2, 1, EDGE);
+  // dog-eared top-right corner
+  px(b.w-4, 0, 3, 3, EDGE);
+  // "REQUIREMENTS" header bar
+  px(3, 2, b.w-6, 2, RED);
+  // body text lines
+  px(3, 6, b.w-7, 1, INK);
+  px(3, 8, b.w-5, 1, INK);
+  px(3, 10, b.w-8, 1, INK);
+  px(3, 12, b.w-6, 1, INK);
   ctx.restore();
 }
 
@@ -555,10 +567,10 @@ function drawTitle() {
   drawKong(k);
   ctx.restore();
   center("CHEN  KONG", 90, "#39c0ff", 40);
-  center("the barrel-throwing boss", 120, "#6a6a8a", 13);
+  center("the requirements-hurling boss", 120, "#6a6a8a", 13);
   center("starring SPARK ⚡", 138, "#19b6ff", 13);
   center("Help SPARK climb to the top.", 300, "#cfe8ff", 14);
-  center("Dodge the barrels. Rescue your friend!", 322, "#cfe8ff", 14);
+  center("Dodge the requirements docs. Rescue your friend!", 322, "#cfe8ff", 14);
   if ((performance.now()/500|0) % 2 === 0)
     center("PRESS ENTER / TAP TO START", 380, "#ffd27f", 16);
   center("← → move   ↑ climb   SPACE jump", 420, "#4a4a6a", 12);
