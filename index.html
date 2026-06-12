@@ -268,6 +268,13 @@ function floorBelow(px, pw, py) {
   }
   return best;
 }
+function ladderTopAt(cx, feetY) {
+  // find a ladder whose top rung meets the girder under these feet
+  for (const l of level.ladders) {
+    if (cx > l.x - 3 && cx < l.x + 17 && Math.abs(feetY - l.top) < 8) return l;
+  }
+  return null;
+}
 
 // ---------- Update ----------
 function updatePlay() {
@@ -340,6 +347,20 @@ function updatePlay() {
 
   // ----- Barrels -----
   for (const b of barrels) {
+    // Tumbling down a ladder: glide straight down until the next girder.
+    if (b.descending) {
+      b.y += 2.2;
+      b.x = b.ladderX;
+      b.rot += 0.2;
+      if (b.y + b.h >= b.targetY) {
+        b.y = b.targetY - b.h;
+        b.vy = 0;
+        b.descending = false;
+      }
+      b.dead = b.y > H + 40;
+      continue;
+    }
+
     b.vy += GRAV;
     if (b.vy > 8) b.vy = 8;
     b.x += b.vx;
@@ -351,16 +372,23 @@ function updatePlay() {
     if (b.vy >= 0 && f && b.y + b.h >= f.y && b.y + b.h <= f.y + 18 + b.vy) {
       b.y = f.y - b.h; b.vy = 0;
     }
-    // bounce off walls -> reverse and drop
-    if (b.x <= 0) { b.x = 0; b.vx = Math.abs(b.vx); }
+    // walls: bounce, but docs on the bottom girder roll off into the pit
+    if (b.x <= 0) {
+      if (Math.abs((b.y + b.h) - level.floors[0]) < 6) { b.dead = true; }
+      else { b.x = 0; b.vx = Math.abs(b.vx); }
+    }
     if (b.x + b.w >= W) { b.x = W - b.w; b.vx = -Math.abs(b.vx); }
 
-    // chance to roll down a ladder
-    const bl = nearLadder(b.x, b.y, b.w, b.h);
-    if (bl && Math.abs((b.y + b.h) - bl.top) < 6 && Math.random() < 0.02) {
-      b.vy = 2; b.x = bl.x;
+    // resting on a girder at a ladder top -> sometimes tumble down it
+    if (b.vy === 0) {
+      const bl = ladderTopAt(b.x + b.w/2, b.y + b.h);
+      if (bl && Math.random() < 0.05) {
+        b.descending = true;
+        b.ladderX = bl.x + 7 - b.w/2;
+        b.targetY = bl.bottom;
+      }
     }
-    b.dead = b.y > H + 40;
+    if (b.y > H + 40) b.dead = true;
   }
   barrels = barrels.filter(b => !b.dead);
 
