@@ -422,84 +422,112 @@ function updatePlay() {
 function px(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 function drawGirder(p) {
-  // red girder with rivets
-  px(p.x, p.y, p.w, 10, "#d0263d");
-  px(p.x, p.y, p.w, 2, "#ff5b76");
-  px(p.x, p.y + 8, p.w, 2, "#7a0f20");
-  for (let x = p.x + 6; x < p.x + p.w; x += 22) {
-    px(x, p.y + 4, 3, 3, "#ffd27f");
+  // steel-red girder with bevel + rivets
+  px(p.x, p.y, p.w, 11, "#b81f33");
+  px(p.x, p.y, p.w, 2, "#ff7d92");        // top highlight
+  px(p.x, p.y + 2, p.w, 3, "#e02a42");    // upper face
+  px(p.x, p.y + 9, p.w, 2, "#6e0d1c");    // underside shadow
+  px(p.x, p.y + 11, p.w, 1, "#ff5b7633"); // faint under-glow
+  for (let x = p.x + 8; x < p.x + p.w - 4; x += 24) {
+    px(x, p.y + 4, 3, 3, "#ffe3a6");      // rivet
+    px(x, p.y + 6, 3, 1, "#9a5b1e");      // rivet shadow
   }
 }
 function drawLadder(l) {
-  ctx.fillStyle = "#39c0ff";
-  // rails
-  px(l.x, l.top, 3, l.h, "#39c0ff");
-  px(l.x + 11, l.top, 3, l.h, "#39c0ff");
-  // rungs
+  // glowing blue ladder with 3D rails
+  px(l.x - 1, l.top, 4, l.h, "#155f88");  // left rail shadow
+  px(l.x, l.top, 3, l.h, "#56c8ff");      // left rail
+  px(l.x + 10, l.top, 4, l.h, "#155f88"); // right rail shadow
+  px(l.x + 11, l.top, 3, l.h, "#56c8ff"); // right rail
   for (let y = l.top + 4; y < l.bottom - 2; y += 9) {
-    px(l.x, y, 14, 2, "#9fe6ff");
+    px(l.x + 1, y + 1, 13, 1, "#0e4b6e"); // rung shadow
+    px(l.x + 1, y, 13, 2, "#b6ecff");     // rung
   }
 }
 
 // Spark — the blue spiky hero (inspired by the uploaded sprite)
 function drawHero(p) {
   const f = p.facing;
+  const T = performance.now();
+  const bob = (p.onGround && p.vx === 0) ? Math.round(Math.sin(T / 300)) : 0;
+  const air = !p.onGround;
   ctx.save();
-  ctx.translate(p.x + p.w/2, p.y + p.h/2);
+  ctx.translate(p.x + p.w/2, p.y + p.h/2 + bob);
   ctx.scale(f, 1);
   ctx.translate(-p.w/2, -p.h/2);
-  const B = "#19b6ff", D = "#0a7bcc", K = "#06263a", WI = "#ffffff";
-  // body blob
-  px(3, 4, 10, 12, B);
-  px(2, 6, 12, 8, B);
-  px(4, 2, 8, 3, B);
-  // spikes
-  px(5, 0, 2, 3, B); px(9, 0, 2, 3, B); px(1, 4, 2, 3, B); px(13, 4, 2, 3, B);
-  // outline-ish shading
+  const B = "#28c4ff", BL = "#8fe4ff", D = "#0a7bcc", K = "#06263a", WI = "#ffffff", Y = "#ffe24a";
+  // soft electric glow
+  ctx.fillStyle = "rgba(60,200,255,0.20)";
+  ctx.fillRect(0, 2, 16, 16);
+  // body
+  px(3, 4, 10, 12, B); px(2, 6, 12, 9, B); px(4, 2, 8, 3, B);
+  px(4, 4, 6, 5, BL);                 // upper sheen
+  // electric spikes
+  px(5, 0, 2, 3, B); px(8, -1, 2, 4, B); px(11, 0, 2, 3, B);
+  px(1, 4, 2, 3, B); px(13, 4, 2, 3, B);
+  px(8, -1, 2, 2, Y);                 // glowing tip
+  // belly shading
   px(3, 14, 10, 2, D);
-  // eyes
-  px(5, 6, 3, 3, WI); px(9, 6, 3, 3, WI);
-  px(6, 7, 2, 2, K); px(10, 7, 2, 2, K);
-  // smile
-  px(6, 11, 4, 1, K);
-  // legs (walk)
+  // eyes (blink ~every 3.4s)
+  const blink = (T % 3400) < 150;
+  if (blink) { px(5, 8, 3, 1, K); px(9, 8, 3, 1, K); }
+  else {
+    px(5, 6, 3, 4, WI); px(9, 6, 3, 4, WI);
+    px(6, 7, 2, 2, K);  px(10, 7, 2, 2, K);
+  }
+  // cheek bolt + smile
+  px(2, 10, 1, 2, Y);
+  px(6, 11, 4, 1, K); px(7, 12, 2, 1, K);
+  // legs
   const step = (Math.floor(p.walkFrame) % 2 === 0 && p.vx !== 0) ? 1 : 0;
-  px(4, 16, 3, 4 - step, D);
-  px(9, 16, 3, 3 + step, D);
+  if (air) { px(4, 15, 3, 3, D); px(9, 15, 3, 3, D); } // tucked mid-jump
+  else { px(4, 16, 3, 4 - step, D); px(9, 16, 3, 3 + step, D); }
   ctx.restore();
 }
 
 // Chen Kong — large pixel villain boss (no stereotyping; classic arcade brute)
 function drawKong(k) {
-  const x = k.x, y = k.y;
-  const SK = "#e8b483", SKD = "#c08b5a", HAIR = "#1a1a22", SH = "#33304a", SHD = "#22203a", EYE="#fff", PUP="#111";
-  const raise = Math.sin(k.anim) > 0 ? -4 : 0;
-  // torso (dark suit/gi)
+  const T = performance.now();
+  const breathe = Math.round(Math.sin(T / 420));
+  const x = k.x, y = k.y + breathe;
+  const SK = "#e8b483", SKD = "#c08b5a", HAIR = "#15151c", SH = "#3a3656", SHL = "#4f4a72", SHD = "#22203a", EYE="#fff", PUP="#111", BELT="#d4ad3e";
+  const raise = Math.sin(k.anim) > 0 ? -5 : 0;
+  // doc ammo pile beside him
+  px(x+44, y+34, 12, 8, "#efe9d2"); px(x+44, y+34, 12, 1, "#fff"); px(x+46, y+37, 8, 1, "#9aa6c0");
+  px(x+46, y+30, 12, 6, "#efe9d2"); px(x+46, y+30, 12, 1, "#fff");
+  // torso (dark gi)
   px(x+6, y+18, 36, 24, SH);
-  px(x+6, y+18, 36, 3, "#4a466a");
+  px(x+6, y+18, 36, 3, SHL);
+  px(x+8, y+21, 8, 16, SHL);           // chest highlight
   px(x+6, y+39, 36, 3, SHD);
-  // belt
-  px(x+6, y+30, 36, 3, "#caa23a");
+  // belt + buckle
+  px(x+6, y+30, 36, 3, BELT);
+  px(x+22, y+30, 4, 3, "#8a6a18");
   // arms
   px(x-2, y+20, 8, 14, SH);            // left arm
-  px(x+42, y+20+raise, 8, 14, SH);     // right arm (raises to throw)
+  px(x+42, y+20+raise, 8, 14, SH);     // right arm (rears back to throw)
   px(x-3, y+32, 7, 6, SKD);            // left hand
   px(x+43, y+18+raise, 7, 6, SKD);     // right hand
   // head
   px(x+12, y+2, 24, 18, SK);
   px(x+12, y+2, 24, 2, SKD);
+  px(x+13, y+4, 6, 12, "#f2c79a");     // face highlight
   // hair (black, neat)
   px(x+10, y, 28, 6, HAIR);
   px(x+10, y+4, 4, 8, HAIR);
   px(x+34, y+4, 4, 8, HAIR);
-  // eyebrows (angry)
-  px(x+15, y+8, 6, 2, HAIR);
-  px(x+27, y+8, 6, 2, HAIR);
+  // eyebrows (angrier as he winds up)
+  const brow = raise ? -1 : 0;
+  px(x+15, y+8+brow, 6, 2, HAIR);
+  px(x+27, y+8+brow, 6, 2, HAIR);
   // eyes
   px(x+16, y+10, 5, 4, EYE); px(x+27, y+10, 5, 4, EYE);
   px(x+18, y+11, 2, 2, PUP); px(x+29, y+11, 2, 2, PUP);
-  // mustache / mouth (grimace)
+  // grimace
   px(x+18, y+16, 12, 2, HAIR);
+  px(x+20, y+15, 8, 1, SKD);
+  // anger steam while winding up
+  if (raise) { px(x+38, y-2, 2, 4, "#cfe8ff"); px(x+40, y-5, 2, 3, "#cfe8ff"); }
   // legs
   px(x+10, y+42, 12, 4, SHD);
   px(x+26, y+42, 12, 4, SHD);
@@ -508,16 +536,35 @@ function drawKong(k) {
 function drawGoal(g) {
   // captive friend (pink) calling for help
   const x=g.x, y=g.y;
-  const P="#ff7fb0", PD="#d65a8a", H="#ffe08a", S="#fff";
-  px(x+4, y+10, 14, 18, P);     // dress
-  px(x+6, y+2, 10, 10, "#ffd9b3"); // head
-  px(x+4, y, 14, 4, H);         // hair
-  px(x+4, y+2, 3, 8, H); px(x+15,y+2,3,8,H);
+  const T = performance.now();
+  const P="#ff7fb0", PD="#d65a8a", PL="#ffa9c9", H="#ffd24a", SK="#ffd9b3";
+  // dress
+  px(x+4, y+12, 14, 16, P);
+  px(x+5, y+13, 5, 12, PL);     // dress highlight
+  px(x+4, y+26, 14, 2, PD);
+  // head
+  px(x+6, y+2, 10, 10, SK);
+  px(x+7, y+3, 4, 5, "#ffe6cc");
+  // hair
+  px(x+4, y, 14, 4, H);
+  px(x+4, y+2, 3, 9, H); px(x+15, y+2, 3, 9, H);
+  // eyes + worried mouth
   px(x+8, y+5, 2, 2, "#111"); px(x+12, y+5, 2, 2, "#111");
-  px(x+8, y+9, 6, 1, PD);
-  // arm waving
-  const w = Math.sin(performance.now()/150) > 0 ? -3 : 0;
-  px(x+1, y+10+w, 4, 3, "#ffd9b3");
+  px(x+9, y+9, 5, 1, PD);
+  // waving arms
+  const w = Math.sin(T/150) > 0 ? -3 : 0;
+  px(x+1, y+12+w, 4, 3, SK);    // raised waving arm
+  px(x+16, y+15, 4, 3, SK);     // other arm
+  // blinking HELP! speech bubble
+  if ((T/450|0) % 2 === 0) {
+    px(x-9, y-13, 24, 11, "#fff");
+    px(x-9, y-13, 24, 1, "#cfd6e6");
+    px(x+3, y-2, 3, 3, "#fff");  // bubble tail
+    ctx.fillStyle = "#d0263d";
+    ctx.font = "bold 8px 'Courier New', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("HELP!", x+3, y-5);
+  }
 }
 
 // A flying "requirements doc" — a sheet of paper with text lines and a dog-eared corner
@@ -561,14 +608,30 @@ function drawHUD() {
 }
 
 function drawScene() {
-  // background
-  ctx.fillStyle = "#0a0a12";
+  // background: night-sky gradient
+  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, "#10122b");
+  grd.addColorStop(0.5, "#0a0a18");
+  grd.addColorStop(1, "#05050c");
+  ctx.fillStyle = grd;
   ctx.fillRect(0, 0, W, H);
-  // stars
-  ctx.fillStyle = "#1d1d3a";
-  for (let i = 0; i < 40; i++) {
-    const sx = (i * 97) % W, sy = (i * 53) % (H-40) + 20;
-    ctx.fillRect(sx, sy, 2, 2);
+  const T = performance.now();
+  // moon with craters
+  ctx.fillStyle = "#26264a";
+  ctx.beginPath(); ctx.arc(W - 66, 72, 34, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#3b3b62";
+  ctx.beginPath(); ctx.arc(W - 66, 72, 29, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#15152e";
+  ctx.beginPath(); ctx.arc(W - 56, 64, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W - 76, 82, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W - 60, 86, 3, 0, Math.PI * 2); ctx.fill();
+  // twinkling stars
+  for (let i = 0; i < 46; i++) {
+    const sx = (i * 97) % W, sy = (i * 53) % (H - 60) + 16;
+    const tw = 0.35 + 0.6 * Math.abs(Math.sin(T / 700 + i));
+    ctx.fillStyle = "rgba(150,170,255," + tw.toFixed(2) + ")";
+    const s = (i % 7 === 0) ? 2 : 1;
+    ctx.fillRect(sx, sy, s, s);
   }
   for (const l of level.ladders) drawLadder(l);
   for (const p of level.platforms) drawGirder(p);
