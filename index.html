@@ -207,14 +207,29 @@ const kong = { x: 60, y: level.floors[5] - 44, w: 48, h: 44, throwTimer: 90, ani
 const goal = { x: W - 70, y: level.floors[5] - 30, w: 22, h: 30 }; // captive
 
 let barrels = [];
+let trail = [];      // Spark's running spark-trail particles
+let throwFx = [];    // brief flash when Chen Kong releases a doc
 function spawnBarrel() {
   barrels.push({
     x: kong.x + kong.w, y: kong.y + kong.h - 14,
-    vx: 1.4, vy: 0, w: 13, h: 16,
+    vx: 1.4, vy: -1.8, w: 13, h: 16,   // tossed up, then arcs down onto the girder
     onLadder: false, floor: 5, rot: 0,
   });
+  throwFx.push({ x: kong.x + kong.w + 6, y: kong.y + kong.h - 16, life: 1 });
   SFX.throw();
 }
+
+// Per-level colour palette for girders + ladders
+function levelPalette(n) {
+  const sets = [
+    { g: ["#b81f33", "#ff7d92", "#e02a42", "#6e0d1c"], rail: "#56c8ff", railSh: "#155f88", rung: "#b6ecff" },
+    { g: ["#1f7d5a", "#7df0c0", "#2ab07e", "#0d4a33"], rail: "#ffd24a", railSh: "#9a7a12", rung: "#fff0b0" },
+    { g: ["#5a2f9e", "#b78fff", "#7a45c8", "#33184f"], rail: "#ff9a56", railSh: "#9a4f18", rung: "#ffd0a6" },
+    { g: ["#9e5a1f", "#ffc07d", "#c8842a", "#4f2d0d"], rail: "#7dff9a", railSh: "#188a3a", rung: "#b6ffc6" },
+  ];
+  return sets[(n - 1) % sets.length];
+}
+let palette = levelPalette(1);
 
 // ---------- State machine ----------
 let state = "title"; // title, play, dead, win, gameover
@@ -232,6 +247,9 @@ function newLevel() {
   level = buildLevel();
   resetPlayer();
   barrels = [];
+  trail = [];
+  throwFx = [];
+  palette = levelPalette(level_num);
   kong.throwTimer = 100;
   bonus = 5000;
 }
@@ -313,8 +331,24 @@ function updatePlay() {
     else p.vx = 0;
     if (p.vx !== 0 && p.onGround) p.walkFrame += 0.2;
 
-    // jump
-    if (keys.jump && p.onGround) { p.vy = JUMP_V; p.onGround = false; p.jumping = true; SFX.jump(); }
+    // spark-trail while running
+    if (p.vx !== 0 && p.onGround) {
+      trail.push({
+        x: p.x + p.w/2 - p.facing * 5, y: p.y + p.h - 3,
+        vx: -p.facing * 0.3, vy: -0.2 - Math.random() * 0.3,
+        life: 1, c: Math.random() < 0.3 ? "#ffe24a" : "#7fe0ff",
+      });
+    }
+
+    // jump (with a little burst of sparks)
+    if (keys.jump && p.onGround) {
+      p.vy = JUMP_V; p.onGround = false; p.jumping = true; SFX.jump();
+      for (let i = 0; i < 6; i++) trail.push({
+        x: p.x + p.w/2, y: p.y + p.h - 2,
+        vx: (Math.random() - 0.5) * 1.6, vy: Math.random() * 0.6,
+        life: 1, c: Math.random() < 0.4 ? "#ffe24a" : "#7fe0ff",
+      });
+    }
 
     // gravity
     p.vy += GRAV;
@@ -336,6 +370,12 @@ function updatePlay() {
       }
     }
   }
+
+  // ----- Particles (spark-trail + throw flashes) -----
+  for (const t of trail) { t.x += t.vx; t.y += t.vy; t.vy += 0.02; t.life -= 0.07; }
+  trail = trail.filter(t => t.life > 0);
+  for (const fx of throwFx) fx.life -= 0.08;
+  throwFx = throwFx.filter(fx => fx.life > 0);
 
   // ----- Kong throws barrels -----
   kong.anim += 0.08;
@@ -422,26 +462,27 @@ function updatePlay() {
 function px(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 function drawGirder(p) {
-  // steel-red girder with bevel + rivets
-  px(p.x, p.y, p.w, 11, "#b81f33");
-  px(p.x, p.y, p.w, 2, "#ff7d92");        // top highlight
-  px(p.x, p.y + 2, p.w, 3, "#e02a42");    // upper face
-  px(p.x, p.y + 9, p.w, 2, "#6e0d1c");    // underside shadow
-  px(p.x, p.y + 11, p.w, 1, "#ff5b7633"); // faint under-glow
+  // beveled girder with rivets (colour varies per level)
+  const g = palette.g;
+  px(p.x, p.y, p.w, 11, g[0]);
+  px(p.x, p.y, p.w, 2, g[1]);          // top highlight
+  px(p.x, p.y + 2, p.w, 3, g[2]);      // upper face
+  px(p.x, p.y + 9, p.w, 2, g[3]);      // underside shadow
   for (let x = p.x + 8; x < p.x + p.w - 4; x += 24) {
-    px(x, p.y + 4, 3, 3, "#ffe3a6");      // rivet
-    px(x, p.y + 6, 3, 1, "#9a5b1e");      // rivet shadow
+    px(x, p.y + 4, 3, 3, "#ffe3a6");   // rivet
+    px(x, p.y + 6, 3, 1, "#9a5b1e");   // rivet shadow
   }
 }
 function drawLadder(l) {
-  // glowing blue ladder with 3D rails
-  px(l.x - 1, l.top, 4, l.h, "#155f88");  // left rail shadow
-  px(l.x, l.top, 3, l.h, "#56c8ff");      // left rail
-  px(l.x + 10, l.top, 4, l.h, "#155f88"); // right rail shadow
-  px(l.x + 11, l.top, 3, l.h, "#56c8ff"); // right rail
+  // glowing ladder with 3D rails (colour varies per level)
+  const rail = palette.rail, sh = palette.railSh, rung = palette.rung;
+  px(l.x - 1, l.top, 4, l.h, sh);      // left rail shadow
+  px(l.x, l.top, 3, l.h, rail);        // left rail
+  px(l.x + 10, l.top, 4, l.h, sh);     // right rail shadow
+  px(l.x + 11, l.top, 3, l.h, rail);   // right rail
   for (let y = l.top + 4; y < l.bottom - 2; y += 9) {
-    px(l.x + 1, y + 1, 13, 1, "#0e4b6e"); // rung shadow
-    px(l.x + 1, y, 13, 2, "#b6ecff");     // rung
+    px(l.x + 1, y + 1, 13, 1, sh);     // rung shadow
+    px(l.x + 1, y, 13, 2, rung);       // rung
   }
 }
 
@@ -633,13 +674,61 @@ function drawScene() {
     const s = (i % 7 === 0) ? 2 : 1;
     ctx.fillRect(sx, sy, s, s);
   }
+  drawSkyline(T);
   for (const l of level.ladders) drawLadder(l);
   for (const p of level.platforms) drawGirder(p);
   drawGoal(goal);
   drawKong(kong);
+  drawThrowAim();
+  // throw release flashes
+  for (const fx of throwFx) {
+    const r = (1 - fx.life) * 8 + 2;
+    ctx.fillStyle = "rgba(255,226,74," + (fx.life * 0.8).toFixed(2) + ")";
+    ctx.fillRect(fx.x - r, fx.y - 1, r * 2, 2);
+    ctx.fillRect(fx.x - 1, fx.y - r, 2, r * 2);
+  }
   for (const b of barrels) drawBarrel(b);
+  // Spark's trail (behind the hero)
+  for (const t of trail) {
+    const s = Math.max(1, Math.round(t.life * 3));
+    ctx.globalAlpha = t.life * 0.8;
+    px(t.x - s/2, t.y - s/2, s, s, t.c);
+  }
+  ctx.globalAlpha = 1;
   drawHero(player);
   drawHUD();
+}
+
+// Distant parallax city skyline (shifts slightly with Spark's position)
+function drawSkyline(T) {
+  const dx = -player.x * 0.06;
+  const base = 452;
+  for (let i = 0; i < 14; i++) {
+    const bx = Math.round(-30 + i * 38 + dx);
+    const bw = 24 + (i * 13 % 12);
+    const bh = 40 + ((i * 37) % 58);
+    px(bx, base - bh, bw, bh, "#0d1030");
+    px(bx, base - bh, bw, 2, "#181c40");      // roof edge
+    for (let wy = base - bh + 6; wy < base - 4; wy += 8) {
+      for (let wx = bx + 4; wx < bx + bw - 4; wx += 7) {
+        const lit = ((wx * 3 + wy * 5 + i) % 13 === 0) && Math.sin(T / 600 + wx) > 0.3;
+        px(wx, wy, 3, 3, lit ? "#ffd27f" : "#1b2150");
+      }
+    }
+  }
+}
+
+// Dotted arc previewing the next doc toss as Chen Kong winds up
+function drawThrowAim() {
+  if (kong.throwTimer > 24 || kong.throwTimer < 0) return;
+  const alpha = (1 - kong.throwTimer / 24) * 0.5;
+  let x = kong.x + kong.w, y = kong.y + kong.h - 14, vx = 1.4, vy = -1.8;
+  ctx.fillStyle = "rgba(255,226,74," + alpha.toFixed(2) + ")";
+  for (let step = 0; step < 70; step++) {
+    vy += GRAV; x += vx; y += vy;
+    if (y > kong.y + kong.h + 4) break;
+    if (step % 4 === 0) ctx.fillRect(x, y, 2, 2);
+  }
 }
 
 function center(text, y, c="#fff", size=20) {
