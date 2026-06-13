@@ -271,7 +271,10 @@ function stopMusic() { if (musicTimer) { clearInterval(musicTimer); musicTimer =
 // ---------- Game constants ----------
 const GRAV = 0.5;
 const RUN = 1.8;
-const JUMP_V = -8.2;
+// Floors are 76px apart and Spark is 20px tall. Jump peaks at ~v^2/(2*GRAV);
+// at -6.6 that's ~47px, so the head stays clear of the floor above (can't
+// clip next-floor docs or reach the upper ladder by jumping).
+const JUMP_V = -6.6;
 const TILE = 16;
 
 // Level geometry: 6 girders (fixed spacing so the boss/captive always sit
@@ -578,7 +581,8 @@ function updatePlay() {
 
   // Climbing logic
   if (lad && (keys.up || keys.down)) {
-    if (!p.climbing && keys.up && p.y + p.h > lad.top + 6) { p.climbing = true; }
+    // upward climb must start from the ground (no grabbing the upper ladder mid-jump)
+    if (!p.climbing && keys.up && (p.onGround || p.coyote > 0) && p.y + p.h > lad.top + 6) { p.climbing = true; }
     if (!p.climbing && keys.down && p.onGround && lad.bottom <= p.y + p.h + 6) { p.climbing = true; }
     else if (!p.climbing && keys.down && p.y + p.h < lad.bottom - 2) { p.climbing = true; }
   }
