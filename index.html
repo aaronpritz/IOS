@@ -63,9 +63,30 @@
   .btn:active, .btn.on { background: #2f7fff; color: #fff; }
   #jump { width: 80px; background: rgba(80,40,60,.85); border-color:#7a3a5a; }
   @media (pointer: coarse) { #touch { display: flex; } }
+  #topbar { position: fixed; top: 10px; right: 12px; display: flex; gap: 8px; z-index: 5; }
+  .ico {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(40, 50, 80, 0.7); border: 2px solid #3a4a7a;
+    color: #cfe8ff; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .ico:active { background: #2f7fff; }
+  #toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: rgba(20, 26, 48, 0.95); border: 1px solid #3a4a7a; color: #cfe8ff;
+    padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0;
+    transition: opacity .25s; pointer-events: none; z-index: 6;
+  }
+  #toast.show { opacity: 1; }
 </style>
 </head>
 <body>
+<div id="topbar">
+  <div class="ico" id="muteBtn" title="Sound on/off">🔊</div>
+  <div class="ico" id="shareBtn" title="Share score">⤴</div>
+</div>
+<div id="toast"></div>
 <div id="wrap">
   <canvas id="game" width="448" height="496"></canvas>
   <div id="hint">← →  move &nbsp;•&nbsp; ↑  climb &nbsp;•&nbsp; SPACE  jump &nbsp;•&nbsp; ENTER  start</div>
@@ -126,13 +147,39 @@ document.querySelectorAll("#touch .btn").forEach(b => {
 // Tap canvas to start
 canvas.addEventListener("touchstart", e => { e.preventDefault(); keys.start = true; setTimeout(()=>keys.start=false, 100); }, {passive:false});
 
+// ---------- Mute, share, toast ----------
+const muteBtn = document.getElementById("muteBtn");
+const shareBtn = document.getElementById("shareBtn");
+const toastEl = document.getElementById("toast");
+let toastTimer = null;
+function toast(msg) {
+  toastEl.textContent = msg; toastEl.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1600);
+}
+function setMuted(m) { muted = m; muteBtn.textContent = muted ? "🔇" : "🔊"; }
+function toggleMute() { setMuted(!muted); toast(muted ? "Sound off" : "Sound on"); }
+muteBtn.addEventListener("click", e => { e.preventDefault(); toggleMute(); });
+addEventListener("keydown", e => { if (e.code === "KeyM") toggleMute(); });
+function shareScore() {
+  const text = "I scored " + score + " (best " + bestScore + ") in Chen Kong — dodge the requirements docs and rescue your friend! 🎮";
+  const url = location.href.split("?")[0];
+  if (navigator.share) {
+    navigator.share({ title: "Chen Kong", text, url }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text + " " + url).then(() => toast("Score copied!"), () => toast(text));
+  } else { toast("Score: " + score); }
+}
+shareBtn.addEventListener("click", e => { e.preventDefault(); shareScore(); });
+
 // ---------- Tiny sound engine (WebAudio, no files) ----------
 let actx = null;
 function audio() {
   if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} }
+  if (actx && actx.state === "suspended") { try { actx.resume(); } catch(e){} }
   return actx;
 }
 function beep(freq, dur, type="square", vol=0.08) {
+  if (muted) return;
   const a = audio(); if (!a) return;
   const o = a.createOscillator(), g = a.createGain();
   o.type = type; o.frequency.value = freq;
@@ -155,7 +202,37 @@ const SFX = {
   smash: () => { beep(200, 0.08, "square", 0.05); beep(90, 0.12, "sawtooth", 0.05); },
   logo: () => { [330, 494, 659, 880].forEach((f,i)=>setTimeout(()=>beep(f, 0.22, "triangle", 0.07), i*70)); },
   start: () => { [392,523,659].forEach((f,i)=>setTimeout(()=>beep(f,0.12,"square",0.07), i*100)); },
+  pickup: () => { beep(740, 0.06, "square", 0.06); setTimeout(()=>beep(988,0.08,"square",0.06), 50); },
+  power: () => { [523,659,880,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.1,"square",0.07), i*45)); },
 };
+
+// ---------- Background music (WebAudio step sequencer, no files) ----------
+const BASS = [110, 0, 110, 0, 146.83, 0, 110, 0, 98, 0, 98, 0, 130.81, 0, 123.47, 0];
+const LEAD = [440, 523, 659, 523, 587, 659, 784, 659, 392, 440, 523, 440, 494, 587, 523, 0];
+let musicTimer = null, musicStep = 0;
+function mnote(freq, dur, type, vol) {
+  if (muted || !freq) return;
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = freq;
+  o.connect(g); g.connect(a.destination);
+  const t = a.currentTime;
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.start(t); o.stop(t + dur);
+}
+function startMusic() {
+  if (musicTimer) return;
+  musicStep = 0;
+  musicTimer = setInterval(() => {
+    if (muted) return;
+    const s = musicStep % 16;
+    mnote(BASS[s], 0.18, "triangle", 0.05);
+    if (s % 2 === 0) mnote(LEAD[s], 0.12, "square", 0.022);
+    musicStep++;
+  }, 165);
+}
+function stopMusic() { if (musicTimer) { clearInterval(musicTimer); musicTimer = null; } }
 
 // ---------- Game constants ----------
 const GRAV = 0.5;
@@ -201,9 +278,27 @@ function buildLevel(n) {
     const yBot = floors[fi];
     ladders.push({ x, y: yTop, h: yBot - yTop, bottom: yBot, top: yTop });
   }
-  return { platforms, ladders, floors, baseY };
+  // conveyor girder (from level 2 on) nudges Spark as he stands on it
+  let conveyor = null;
+  if (n >= 2) {
+    const cf = 1 + (n % 4);
+    conveyor = { floor: cf, y: floors[cf], dir: (n % 2) ? 1 : -1 };
+  }
+  return { platforms, ladders, floors, baseY, conveyor };
 }
 let level = buildLevel(1);
+
+// ---------- Items placement ----------
+function makeItem(type, floorIdx) {
+  return { x: 40 + Math.floor(Math.random() * (W - 90)), y: level.floors[floorIdx] - 14,
+           w: 14, h: 14, type, taken: false, bob: Math.random() * 6 };
+}
+function placeItems() {
+  items = [];
+  items.push(makeItem("hammer", 1 + Math.floor(Math.random() * 3)));            // hammer, floors 1-3
+  items.push(makeItem(Math.random() < 0.5 ? "coffee" : "briefcase", Math.floor(Math.random() * 5)));
+  items.push(makeItem(Math.random() < 0.5 ? "briefcase" : "coffee", Math.floor(Math.random() * 5)));
+}
 
 // ---------- Entities ----------
 const player = {
@@ -211,13 +306,16 @@ const player = {
   vx: 0, vy: 0,
   onGround: false, onLadder: false, climbing: false,
   facing: 1, walkFrame: 0, alive: true, jumping: false, squash: 0,
+  coyote: 0, jumpBuffer: 0, hammer: 0,
 };
 function resetPlayer() {
   player.x = 30; player.y = level.baseY - player.h;
   player.vx = 0; player.vy = 0;
   player.onGround = true; player.onLadder = false; player.climbing = false;
   player.alive = true; player.jumping = false; player.facing = 1; player.squash = 0;
+  player.coyote = 0; player.jumpBuffer = 0; player.hammer = 0;
 }
+let prevJump = false; // for jump-press edge detection
 
 // Chen Kong sits top-left, princess top-right
 const kong = { x: 60, y: level.floors[5] - 44, w: 48, h: 44, throwTimer: 90, anim: 0 };
@@ -240,26 +338,69 @@ function spawnBits(x, y, n, col) {
   });
 }
 function spawnBarrel() {
+  const spd = DIFF[difficulty].spd;
+  const base = 1.4 + Math.min(1.3, (level_num - 1) * 0.18);
+  // URGENT memos appear more often at higher levels: faster + lightly homing
+  const urgent = Math.random() < Math.min(0.4, 0.08 + level_num * 0.04);
   barrels.push({
     x: kong.x + kong.w, y: kong.y + kong.h - 14,
-    vx: 1.4 + Math.min(1.3, (level_num - 1) * 0.18), vy: -1.8, w: 13, h: 16,
+    vx: (base + (urgent ? 0.8 : 0)) * spd, vy: -1.8, w: 13, h: 16,
     onLadder: false, floor: 5, rot: 0,
+    urgent, label: urgent ? "URGENT" : DOC_LABELS[Math.floor(Math.random() * DOC_LABELS.length)],
   });
   throwFx.push({ x: kong.x + kong.w + 6, y: kong.y + kong.h - 16, life: 1 });
   SFX.throw();
 }
+// Forgiving overlap: shrink both rects so near-misses don't read as hits.
+function hitOverlap(a, b, pad) {
+  return a.x + pad < b.x + b.w - pad && a.x + a.w - pad > b.x + pad &&
+         a.y + pad < b.y + b.h - pad && a.y + a.h - pad > b.y + pad;
+}
 
-// Per-level colour palette for girders + ladders
+// Per-level colour palette for girders + ladders + sky theme
 function levelPalette(n) {
   const sets = [
-    { g: ["#b81f33", "#ff7d92", "#e02a42", "#6e0d1c"], rail: "#56c8ff", railSh: "#155f88", rung: "#b6ecff" },
-    { g: ["#1f7d5a", "#7df0c0", "#2ab07e", "#0d4a33"], rail: "#ffd24a", railSh: "#9a7a12", rung: "#fff0b0" },
-    { g: ["#5a2f9e", "#b78fff", "#7a45c8", "#33184f"], rail: "#ff9a56", railSh: "#9a4f18", rung: "#ffd0a6" },
-    { g: ["#9e5a1f", "#ffc07d", "#c8842a", "#4f2d0d"], rail: "#7dff9a", railSh: "#188a3a", rung: "#b6ffc6" },
+    { g: ["#b81f33", "#ff7d92", "#e02a42", "#6e0d1c"], rail: "#56c8ff", railSh: "#155f88", rung: "#b6ecff",
+      sky: ["#10122b", "#0a0a18", "#05050c"], city: "#0d1030", win: "#1b2150" },          // night
+    { g: ["#1f7d5a", "#7df0c0", "#2ab07e", "#0d4a33"], rail: "#ffd24a", railSh: "#9a7a12", rung: "#fff0b0",
+      sky: ["#2a1840", "#3a1d33", "#140a1e"], city: "#23123a", win: "#3a1d50" },           // dusk
+    { g: ["#5a2f9e", "#b78fff", "#7a45c8", "#33184f"], rail: "#ff9a56", railSh: "#9a4f18", rung: "#ffd0a6",
+      sky: ["#06243a", "#04304a", "#021420"], city: "#062436", win: "#0a3a52" },           // storm
+    { g: ["#9e5a1f", "#ffc07d", "#c8842a", "#4f2d0d"], rail: "#7dff9a", railSh: "#188a3a", rung: "#b6ffc6",
+      sky: ["#241040", "#3d1060", "#10081e"], city: "#2a0d44", win: "#4a1670" },           // neon
   ];
   return sets[(n - 1) % sets.length];
 }
 let palette = levelPalette(1);
+
+// ---------- Difficulty / flavor data ----------
+const DIFF = [
+  { name: "EASY",   lives: 5, spd: 0.8, rate: 1.25 },
+  { name: "NORMAL", lives: 3, spd: 1.0, rate: 1.0 },
+  { name: "HARD",   lives: 2, spd: 1.3, rate: 0.78 },
+];
+let difficulty = 1; // index into DIFF
+const TAUNTS = [
+  "Compliance is coming!",
+  "Read the fine print, Spark!",
+  "Mind the audit trail!",
+  "Risk never sleeps...",
+  "Escalating to management!",
+  "Have you filed that yet?",
+];
+const DOC_LABELS = ["AUD", "POL", "RSK", "SOX", "PII", "REQ"];
+
+// ---------- Items (collectibles + power-ups) ----------
+const ITEM_DEFS = {
+  coffee:    { c: "#b06a32", value: 250 },
+  briefcase: { c: "#5a4a8a", value: 400 },
+  hammer:    { c: "#caa23a", value: 0 },
+};
+let items = [];        // {x,y,w,h,type,taken,bob}
+let muted = false;     // sound toggle
+let combo = 0, comboTimer = 0;
+
+function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
 
 // ---------- State machine ----------
 let state = "title"; // title, splash, play, dead, win, gameover
@@ -271,10 +412,13 @@ let bonus = 5000;
 let splashT = 0;            // logo-sting timer
 let afterSplash = null;     // what to do once the sting finishes
 let splashLabel = "";       // caption under the logo
+let splashTaunt = "";       // boss taunt under the caption
 
 function startGame() {
-  score = 0; lives = 3; level_num = 1;
+  score = 0; lives = DIFF[difficulty].lives; level_num = 1;
+  combo = 0; comboTimer = 0;
   newLevel();
+  startMusic();
   startSplash("LEVEL 1", () => { state = "play"; });
 }
 // Burst the Reveal Risk logo into view, then fade, then run `next`.
@@ -282,6 +426,7 @@ function startSplash(label, next) {
   state = "splash";
   splashT = 0;
   splashLabel = label;
+  splashTaunt = TAUNTS[(level_num - 1) % TAUNTS.length];
   afterSplash = next;
   addShake(7);
   SFX.logo();
@@ -289,6 +434,7 @@ function startSplash(label, next) {
 function newLevel() {
   level = buildLevel(level_num);
   resetPlayer();
+  placeItems();
   barrels = [];
   trail = [];
   throwFx = [];
@@ -296,6 +442,7 @@ function newLevel() {
   popups = [];
   shake = 0;
   flash = 0;
+  combo = 0; comboTimer = 0;
   palette = levelPalette(level_num);
   kong.throwTimer = 100;
   bonus = 5000;
@@ -303,10 +450,12 @@ function newLevel() {
 function loseLife() {
   lives--;
   SFX.hit();
+  vibrate(200);
+  combo = 0; comboTimer = 0;
   addShake(13);
   flash = 1; flashCol = "255,60,90";
   spawnBits(player.x + player.w/2, player.y + player.h/2, 14, "#7fe0ff");
-  if (lives <= 0) { state = "gameover"; stateTimer = 0; updateBest(); }
+  if (lives <= 0) { state = "gameover"; stateTimer = 0; updateBest(); stopMusic(); }
   else { state = "dead"; stateTimer = 0; }
 }
 
@@ -349,6 +498,8 @@ function updatePlay() {
   bonus = Math.max(0, bonus - 1);
   // ----- Player movement -----
   const p = player;
+  const jumpEdge = keys.jump && !prevJump;   // rising edge of the jump input
+  prevJump = keys.jump;
   const lad = nearLadder(p.x, p.y, p.w, p.h);
 
   // Climbing logic
@@ -390,15 +541,21 @@ function updatePlay() {
       });
     }
 
-    // jump (with a little burst of sparks)
-    if (keys.jump && p.onGround) {
-      p.vy = JUMP_V; p.onGround = false; p.jumping = true; SFX.jump();
+    // coyote time + jump buffering: forgiving, responsive jumps
+    if (p.onGround) p.coyote = 6; else if (p.coyote > 0) p.coyote--;
+    if (jumpEdge) p.jumpBuffer = 8;
+    if (p.jumpBuffer > 0) p.jumpBuffer--;
+    if (p.jumpBuffer > 0 && (p.onGround || p.coyote > 0)) {
+      p.vy = JUMP_V; p.onGround = false; p.jumping = true;
+      p.jumpBuffer = 0; p.coyote = 0; SFX.jump();
       for (let i = 0; i < 6; i++) trail.push({
         x: p.x + p.w/2, y: p.y + p.h - 2,
         vx: (Math.random() - 0.5) * 1.6, vy: Math.random() * 0.6,
         life: 1, c: Math.random() < 0.4 ? "#ffe24a" : "#7fe0ff",
       });
     }
+    // variable jump height: releasing early cuts the rise
+    if (!keys.jump && p.vy < -3) p.vy = -3;
 
     // gravity
     p.vy += GRAV;
@@ -430,6 +587,33 @@ function updatePlay() {
         }
       }
     }
+
+    // conveyor belt nudge while standing on it
+    if (level.conveyor && p.onGround && Math.abs((p.y + p.h) - level.conveyor.y) < 4) {
+      p.x += level.conveyor.dir * 0.7;
+      if (p.x < 0) p.x = 0;
+      if (p.x + p.w > W) p.x = W - p.w;
+    }
+  }
+
+  // ----- Power-up timer, combo decay, item pickups -----
+  if (p.hammer > 0) p.hammer--;
+  if (comboTimer > 0) { comboTimer--; if (comboTimer === 0) combo = 0; }
+  for (const it of items) {
+    if (it.taken) continue;
+    if (rectsOverlap(p, it)) {
+      it.taken = true;
+      if (it.type === "hammer") {
+        p.hammer = 360; SFX.power(); vibrate(40);
+        addPopup(it.x, it.y - 8, "HAMMER!", "#ffe24a");
+        flash = 0.6; flashCol = "255,210,120";
+      } else {
+        const v = ITEM_DEFS[it.type].value;
+        score += v; SFX.pickup();
+        addPopup(it.x, it.y - 8, "+" + v, "#7fffd4");
+        spawnBits(it.x + it.w/2, it.y + it.h/2, 6, ITEM_DEFS[it.type].c);
+      }
+    }
   }
 
   // squash recovery
@@ -441,12 +625,15 @@ function updatePlay() {
   for (const fx of throwFx) fx.life -= 0.08;
   throwFx = throwFx.filter(fx => fx.life > 0);
 
-  // ----- Kong throws barrels -----
+  // ----- Kong throws docs (barrage once Spark reaches the top floor) -----
   kong.anim += 0.08;
+  const onTop = p.onGround && Math.abs((p.y + p.h) - level.floors[5]) < 8 && p.x > 100;
   kong.throwTimer--;
   if (kong.throwTimer <= 0) {
     spawnBarrel();
-    kong.throwTimer = 110 + Math.random() * 70 - Math.min(60, level_num * 8);
+    let base = (110 + Math.random() * 70 - Math.min(60, level_num * 8)) * DIFF[difficulty].rate;
+    if (onTop) base *= 0.45;     // climactic barrage near the captive
+    kong.throwTimer = Math.max(22, base);
   }
 
   // ----- Barrels -----
@@ -465,6 +652,11 @@ function updatePlay() {
       continue;
     }
 
+    // URGENT memos drift toward Spark when sharing a floor
+    if (b.urgent && Math.abs((b.y + b.h) - (player.y + player.h)) < 12) {
+      b.vx += (player.x > b.x ? 0.05 : -0.05);
+      if (b.vx > 3.4) b.vx = 3.4; if (b.vx < -3.4) b.vx = -3.4;
+    }
     b.vy += GRAV;
     if (b.vy > 8) b.vy = 8;
     b.x += b.vx;
@@ -501,18 +693,24 @@ function updatePlay() {
 
   // ----- Collisions -----
   for (const b of barrels) {
-    if (rectsOverlap(p, b)) {
-      // jumping over barrel scores points
-      if (p.vy < 0 || (p.jumping && p.y + p.h < b.y + 4)) {
-        // landing on top is fine-ish, treat as hit unless clearly above
-      }
-      loseLife();
-      return;
+    if (b.dead) continue;
+    // hammer time: smash docs on contact instead of dying
+    if (p.hammer > 0 && rectsOverlap(p, b)) {
+      b.dead = true;
+      score += 150; SFX.smash(); addShake(4); vibrate(30);
+      addPopup(b.x, b.y - 6, "+150", "#ffd27f");
+      spawnBits(b.x + b.w/2, b.y + b.h/2, 9, "#f6f3e7");
+      continue;
     }
-    // scoring: jumping just over a barrel
-    if (!b.scored && p.jumping && Math.abs((p.x) - (b.x)) < 18 && p.y + p.h < b.y) {
-      b.scored = true; score += 100; SFX.point();
-      addPopup(b.x, b.y - 6, "+100", "#ffe24a");
+    // getting hit (forgiving hitbox)
+    if (hitOverlap(p, b, 3)) { loseLife(); return; }
+    // scoring: jumping just over a doc builds a combo multiplier
+    if (!b.scored && p.jumping && Math.abs(p.x - b.x) < 18 && p.y + p.h < b.y) {
+      b.scored = true;
+      combo = Math.min(combo + 1, 9); comboTimer = 100;
+      const pts = 100 * combo;
+      score += pts; SFX.point();
+      addPopup(b.x, b.y - 6, "+" + pts + (combo > 1 ? " x" + combo : ""), combo > 1 ? "#ff9a56" : "#ffe24a");
     }
   }
 
@@ -600,6 +798,12 @@ function drawHero(p) {
   const step = (Math.floor(p.walkFrame) % 2 === 0 && p.vx !== 0) ? 1 : 0;
   if (air) { px(4, 15, 3, 3, D); px(9, 15, 3, 3, D); } // tucked mid-jump
   else { px(4, 16, 3, 4 - step, D); px(9, 16, 3, 3 + step, D); }
+  // hammer power-up: swinging mallet
+  if (p.hammer > 0) {
+    const overhead = Math.sin(T / 70) > 0;
+    if (overhead) { px(7, -9, 3, 9, "#7a5a2a"); px(4, -12, 11, 5, "#caa23a"); px(4, -12, 11, 1, "#ffe9a6"); }
+    else { px(11, 1, 9, 3, "#7a5a2a"); px(18, -2, 6, 9, "#caa23a"); px(18, -2, 6, 1, "#ffe9a6"); }
+  }
   ctx.restore();
 }
 
@@ -691,7 +895,9 @@ function drawBarrel(b) {
   ctx.translate(b.x + b.w/2, b.y + b.h/2);
   ctx.rotate(b.rot * 0.5);
   ctx.translate(-b.w/2, -b.h/2);
-  const PAPER = "#f6f3e7", EDGE = "#cfc8a8", INK = "#5a6b8c", RED = "#d0263d";
+  const urgent = b.urgent;
+  const PAPER = urgent ? "#ffe2e2" : "#f6f3e7", EDGE = urgent ? "#e0a6a6" : "#cfc8a8",
+        INK = urgent ? "#b03030" : "#5a6b8c", HDR = urgent ? "#d0263d" : "#3f6fb0";
   // page body
   px(1, 0, b.w-2, b.h, PAPER);
   px(1, 0, b.w-2, 1, "#ffffff");
@@ -700,13 +906,16 @@ function drawBarrel(b) {
   px(1, b.h-1, b.w-2, 1, EDGE);
   // dog-eared top-right corner
   px(b.w-4, 0, 3, 3, EDGE);
-  // "REQUIREMENTS" header bar
-  px(3, 2, b.w-6, 2, RED);
+  // header bar
+  px(3, 2, b.w-6, 2, HDR);
+  // label stamp
+  ctx.fillStyle = INK;
+  ctx.font = "bold 5px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(urgent ? "URG" : b.label, b.w/2, 9);
   // body text lines
-  px(3, 6, b.w-7, 1, INK);
-  px(3, 8, b.w-5, 1, INK);
-  px(3, 10, b.w-8, 1, INK);
-  px(3, 12, b.w-6, 1, INK);
+  px(3, 11, b.w-7, 1, INK);
+  px(3, 13, b.w-6, 1, INK);
   ctx.restore();
 }
 
@@ -723,6 +932,19 @@ function drawHUD() {
   ctx.fillText("♥".repeat(Math.max(0,lives)), W - 8, 16);
   ctx.fillStyle = "#fff";
   ctx.fillText("L-" + level_num, W - 8, 30);
+  // combo multiplier
+  if (combo > 1) {
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ff9a56";
+    ctx.font = "bold 14px 'Courier New', monospace";
+    ctx.fillText("COMBO x" + combo, W/2, 16);
+  }
+  // hammer power-up timer bar
+  if (player.hammer > 0) {
+    const w = Math.round((player.hammer / 360) * 80);
+    px(W/2 - 40, 22, 80, 4, "#3a2a10");
+    px(W/2 - 40, 22, w, 4, "#ffd24a");
+  }
 }
 
 function drawScene() {
@@ -730,11 +952,12 @@ function drawScene() {
   // screen-shake: jolt the whole world layer
   ctx.save();
   if (shake) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
-  // background: night-sky gradient (over-drawn so shake never reveals edges)
+  // background: themed sky gradient (over-drawn so shake never reveals edges)
+  const sky = palette.sky;
   const grd = ctx.createLinearGradient(0, 0, 0, H);
-  grd.addColorStop(0, "#10122b");
-  grd.addColorStop(0.5, "#0a0a18");
-  grd.addColorStop(1, "#05050c");
+  grd.addColorStop(0, sky[0]);
+  grd.addColorStop(0.5, sky[1]);
+  grd.addColorStop(1, sky[2]);
   ctx.fillStyle = grd;
   ctx.fillRect(-16, -16, W + 32, H + 32);
   // moon with craters
@@ -757,6 +980,8 @@ function drawScene() {
   drawSkyline(T);
   for (const l of level.ladders) drawLadder(l);
   for (const p of level.platforms) drawGirder(p);
+  drawConveyor();
+  drawItems();
   drawGoal(goal);
   drawKong(kong);
   drawThrowAim();
@@ -809,13 +1034,51 @@ function drawSkyline(T) {
     const bx = Math.round(-30 + i * 38 + dx);
     const bw = 24 + (i * 13 % 12);
     const bh = 40 + ((i * 37) % 58);
-    px(bx, base - bh, bw, bh, "#0d1030");
-    px(bx, base - bh, bw, 2, "#181c40");      // roof edge
+    px(bx, base - bh, bw, bh, palette.city);
+    px(bx, base - bh, bw, 2, palette.win);    // roof edge
     for (let wy = base - bh + 6; wy < base - 4; wy += 8) {
       for (let wx = bx + 4; wx < bx + bw - 4; wx += 7) {
         const lit = ((wx * 3 + wy * 5 + i) % 13 === 0) && Math.sin(T / 600 + wx) > 0.3;
-        px(wx, wy, 3, 3, lit ? "#ffd27f" : "#1b2150");
+        px(wx, wy, 3, 3, lit ? "#ffd27f" : palette.win);
       }
+    }
+  }
+}
+
+// Animated arrows on the conveyor girder
+function drawConveyor() {
+  const c = level.conveyor;
+  if (!c) return;
+  const T = performance.now();
+  const off = ((T / 30) * c.dir) % 24;
+  for (let x = -24 + ((off % 24) + 24) % 24; x < W; x += 24) {
+    const ax = Math.round(x);
+    if (c.dir > 0) { px(ax, c.y + 4, 4, 3, "#ffffff66"); px(ax + 4, c.y + 5, 2, 1, "#ffffff66"); }
+    else { px(ax + 2, c.y + 4, 4, 3, "#ffffff66"); px(ax, c.y + 5, 2, 1, "#ffffff66"); }
+  }
+}
+// Collectibles and the hammer power-up resting on the girders
+function drawItems() {
+  const T = performance.now();
+  for (const it of items) {
+    if (it.taken) continue;
+    const x = it.x, y = it.y + Math.round(Math.sin(T / 300 + it.bob) * 2);
+    if (it.type === "hammer") {
+      ctx.fillStyle = "rgba(255,210,80,0.25)"; ctx.fillRect(x - 2, y - 2, it.w + 4, it.h + 4);
+      px(x + 5, y + 4, 3, 10, "#7a5a2a");   // handle
+      px(x + 2, y + 2, 10, 5, "#caa23a");   // head
+      px(x + 2, y + 2, 10, 1, "#ffe9a6");
+    } else if (it.type === "coffee") {
+      px(x + 4, y, 1, 3, "#9aa6c0"); px(x + 7, y, 1, 3, "#9aa6c0");  // steam
+      px(x + 2, y + 4, 9, 8, "#e8e2d0");    // cup
+      px(x + 2, y + 4, 9, 2, "#ffffff");
+      px(x + 3, y + 6, 7, 4, "#6a4326");    // coffee
+      px(x + 11, y + 6, 3, 3, "#e8e2d0");   // handle
+    } else { // briefcase
+      px(x + 1, y + 4, 12, 9, "#5a4a8a");
+      px(x + 1, y + 4, 12, 2, "#7a6ab0");
+      px(x + 5, y + 2, 4, 2, "#5a4a8a");    // handle
+      px(x + 6, y + 7, 2, 3, "#caa23a");    // latch
     }
   }
 }
@@ -876,6 +1139,7 @@ function drawSplash() {
   ctx.globalAlpha = alpha;
   center("REVEAL RISK", H * 0.42 + r + 34, "#3f8ed6", 26);
   if (splashLabel) center(splashLabel, H * 0.42 + r + 60, "#cfe8ff", 15);
+  if (splashTaunt) center('"' + splashTaunt + '"', H * 0.42 + r + 84, "#ff9a56", 13);
   ctx.globalAlpha = 1;
 }
 
@@ -890,11 +1154,22 @@ function drawTitle() {
   center("CHEN  KONG", 90, "#39c0ff", 40);
   center("the requirements-hurling boss", 120, "#6a6a8a", 13);
   center("starring SPARK ⚡", 138, "#19b6ff", 13);
-  center("Help SPARK climb to the top.", 300, "#cfe8ff", 14);
-  center("Dodge the requirements docs. Rescue your friend!", 322, "#cfe8ff", 14);
+  center("Climb up, dodge the docs, grab the hammer,", 290, "#cfe8ff", 13);
+  center("snag coffee ☕ & briefcases 💼, rescue your friend!", 308, "#cfe8ff", 13);
+  // difficulty selector
+  ctx.font = "bold 15px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  const spacing = 110;
+  for (let i = 0; i < DIFF.length; i++) {
+    const dx = W/2 + (i - 1) * spacing;
+    const sel = i === difficulty;
+    ctx.fillStyle = sel ? "#ffd27f" : "#4a4a6a";
+    ctx.fillText((sel ? "▸ " : "") + DIFF[i].name + (sel ? " ◂" : ""), dx, 348);
+  }
+  center("◀ ▶  choose difficulty", 368, "#6a6a8a", 12);
   if ((performance.now()/500|0) % 2 === 0)
-    center("PRESS ENTER / TAP TO START", 380, "#ffd27f", 16);
-  center("← → move   ↑ climb   SPACE jump", 420, "#4a4a6a", 12);
+    center("PRESS ENTER / TAP JUMP TO START", 396, "#ffd27f", 15);
+  center("← → move   ↑ climb   SPACE jump   M mute", 424, "#4a4a6a", 11);
   if (bestScore > 0) center("BEST " + bestScore, 450, "#6a6a8a", 12);
 }
 
@@ -912,16 +1187,22 @@ function drawWin() {
   ctx.translate(W/2, H/2 - 20); ctx.scale(pulse, pulse); ctx.translate(-W/2, -(H/2 - 20));
   center("RESCUED!", H/2 - 20, "#ffd27f", 34);
   ctx.restore();
-  center("Level " + level_num + " cleared", H/2 + 14, "#fff", 16);
-  center("Score " + String(score).padStart(6, "0"), H/2 + 38, "#39c0ff", 14);
+  // Reveal Risk "mitigated" banner
+  ctx.fillStyle = "#1a5fb4"; ctx.fillRect(W/2 - 110, H/2 + 24, 220, 26);
+  ctx.fillStyle = "#0d2b6b"; ctx.fillRect(W/2 - 110, H/2 + 44, 220, 6);
+  center("RISK MITIGATED ✓", H/2 + 42, "#ffffff", 16);
+  center("Level " + level_num + " cleared", H/2 + 70, "#fff", 14);
+  center("Score " + String(score).padStart(6, "0"), H/2 + 92, "#39c0ff", 13);
 }
 function drawGameOver() {
   ctx.fillStyle = "#0a0a12"; ctx.fillRect(0,0,W,H);
   center("GAME OVER", H/2 - 30, "#ff5b76", 38);
   center("Score  " + score, H/2 + 10, "#fff", 18);
   center("Best   " + bestScore, H/2 + 36, "#6a6a8a", 14);
+  if (score >= bestScore && score > 0) center("★ NEW BEST! ★", H/2 + 58, "#ffd27f", 14);
   if ((performance.now()/500|0) % 2 === 0)
-    center("PRESS ENTER TO PLAY AGAIN", H/2 + 80, "#ffd27f", 16);
+    center("PRESS ENTER / TAP JUMP TO PLAY AGAIN", H/2 + 86, "#ffd27f", 14);
+  center("tap ⤴ (top-right) to share your score", H/2 + 112, "#6a6a8a", 12);
 }
 
 // ---------- Effects stepping (runs every frame, all states) ----------
@@ -935,10 +1216,14 @@ function updateFx() {
 }
 
 // ---------- Main loop ----------
+let lrLock = false; // debounce difficulty selection on the title
 function loop() {
   updateFx();
   switch (state) {
     case "title":
+      if (keys.left && !lrLock) { difficulty = (difficulty + 2) % 3; lrLock = true; SFX.pickup(); }
+      else if (keys.right && !lrLock) { difficulty = (difficulty + 1) % 3; lrLock = true; SFX.pickup(); }
+      else if (!keys.left && !keys.right) lrLock = false;
       if (keys.start) { startGame(); keys.start = false; }
       drawTitle();
       break;
