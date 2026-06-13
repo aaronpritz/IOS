@@ -142,9 +142,11 @@ const SFX = {
   jump: () => beep(520, 0.15, "square", 0.07),
   climb: () => beep(300, 0.05, "triangle", 0.04),
   hit: () => { beep(160, 0.3, "sawtooth", 0.12); beep(80, 0.4, "sawtooth", 0.1); },
-  point: () => beep(880, 0.08, "square", 0.06),
+  point: () => { beep(880, 0.07, "square", 0.06); setTimeout(()=>beep(1320,0.07,"square",0.05), 60); },
   win: () => { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.18,"square",0.08), i*120)); },
   throw: () => beep(220, 0.12, "sawtooth", 0.05),
+  land: () => beep(110, 0.09, "triangle", 0.07),
+  smash: () => { beep(200, 0.08, "square", 0.05); beep(90, 0.12, "sawtooth", 0.05); },
   start: () => { [392,523,659].forEach((f,i)=>setTimeout(()=>beep(f,0.12,"square",0.07), i*100)); },
 };
 
@@ -193,13 +195,13 @@ const player = {
   x: 40, y: 0, w: 16, h: 20,
   vx: 0, vy: 0,
   onGround: false, onLadder: false, climbing: false,
-  facing: 1, walkFrame: 0, alive: true, jumping: false,
+  facing: 1, walkFrame: 0, alive: true, jumping: false, squash: 0,
 };
 function resetPlayer() {
   player.x = 30; player.y = level.baseY - player.h;
   player.vx = 0; player.vy = 0;
   player.onGround = true; player.onLadder = false; player.climbing = false;
-  player.alive = true; player.jumping = false; player.facing = 1;
+  player.alive = true; player.jumping = false; player.facing = 1; player.squash = 0;
 }
 
 // Chen Kong sits top-left, princess top-right
@@ -209,6 +211,19 @@ const goal = { x: W - 70, y: level.floors[5] - 30, w: 22, h: 30 }; // captive
 let barrels = [];
 let trail = [];      // Spark's running spark-trail particles
 let throwFx = [];    // brief flash when Chen Kong releases a doc
+let bits = [];       // debris particles (paper shreds, landing puffs)
+let popups = [];     // floating score popups
+let shake = 0;       // screen-shake magnitude
+let flash = 0;       // full-screen flash intensity (0..1)
+let flashCol = "255,91,118";
+function addShake(n) { shake = Math.min(14, shake + n); }
+function addPopup(x, y, text, c) { popups.push({ x, y, text, c: c || "#ffe24a", life: 1 }); }
+function spawnBits(x, y, n, col) {
+  for (let i = 0; i < n; i++) bits.push({
+    x, y, vx: (Math.random() - 0.5) * 3.4, vy: -Math.random() * 2.4 - 0.4,
+    life: 1, c: col || (Math.random() < 0.5 ? "#f6f3e7" : "#cfc8a8"),
+  });
+}
 function spawnBarrel() {
   barrels.push({
     x: kong.x + kong.w, y: kong.y + kong.h - 14,
@@ -249,6 +264,10 @@ function newLevel() {
   barrels = [];
   trail = [];
   throwFx = [];
+  bits = [];
+  popups = [];
+  shake = 0;
+  flash = 0;
   palette = levelPalette(level_num);
   kong.throwTimer = 100;
   bonus = 5000;
@@ -256,6 +275,9 @@ function newLevel() {
 function loseLife() {
   lives--;
   SFX.hit();
+  addShake(13);
+  flash = 1; flashCol = "255,60,90";
+  spawnBits(player.x + player.w/2, player.y + player.h/2, 14, "#7fe0ff");
   if (lives <= 0) { state = "gameover"; stateTimer = 0; bestScore = Math.max(bestScore, score); }
   else { state = "dead"; stateTimer = 0; }
 }
@@ -366,10 +388,24 @@ function updatePlay() {
     if (p.vy >= 0) {
       const f = floorBelow(p.x, p.w, p.y + p.h - p.vy);
       if (f && p.y + p.h >= f.y && p.y + p.h <= f.y + 16 + p.vy) {
+        const impact = p.vy;
         p.y = f.y - p.h; p.vy = 0; p.onGround = true; p.jumping = false;
+        if (impact > 4) {            // landed from a real fall: squash + dust + thud
+          p.squash = 1;
+          addShake(Math.min(5, impact * 0.5));
+          SFX.land();
+          for (let i = 0; i < 5; i++) bits.push({
+            x: p.x + p.w/2 + (Math.random() - 0.5) * 10, y: f.y,
+            vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 0.8,
+            life: 1, c: "#3a4a70",
+          });
+        }
       }
     }
   }
+
+  // squash recovery
+  if (player.squash > 0.02) player.squash *= 0.8; else player.squash = 0;
 
   // ----- Particles (spark-trail + throw flashes) -----
   for (const t of trail) { t.x += t.vx; t.y += t.vy; t.vy += 0.02; t.life -= 0.07; }
@@ -414,8 +450,11 @@ function updatePlay() {
     }
     // walls: bounce, but docs on the bottom girder roll off into the pit
     if (b.x <= 0) {
-      if (Math.abs((b.y + b.h) - level.floors[0]) < 6) { b.dead = true; }
-      else { b.x = 0; b.vx = Math.abs(b.vx); }
+      if (Math.abs((b.y + b.h) - level.floors[0]) < 6) {
+        b.dead = true;
+        spawnBits(b.x + b.w/2, b.y + b.h/2, 8);  // shredded paper poof
+        SFX.smash();
+      } else { b.x = 0; b.vx = Math.abs(b.vx); }
     }
     if (b.x + b.w >= W) { b.x = W - b.w; b.vx = -Math.abs(b.vx); }
 
@@ -445,6 +484,7 @@ function updatePlay() {
     // scoring: jumping just over a barrel
     if (!b.scored && p.jumping && Math.abs((p.x) - (b.x)) < 18 && p.y + p.h < b.y) {
       b.scored = true; score += 100; SFX.point();
+      addPopup(b.x, b.y - 6, "+100", "#ffe24a");
     }
   }
 
@@ -452,6 +492,10 @@ function updatePlay() {
   if (rectsOverlap(p, goal)) {
     score += bonus + 1000;
     state = "win"; stateTimer = 0; SFX.win();
+    addShake(8);
+    flash = 1; flashCol = "255,210,120";
+    addPopup(goal.x - 6, goal.y - 18, "+" + (bonus + 1000), "#ffd27f");
+    spawnBits(goal.x + goal.w/2, goal.y, 18, "#ffd27f");
   }
 
   // fell off bottom
@@ -492,10 +536,14 @@ function drawHero(p) {
   const T = performance.now();
   const bob = (p.onGround && p.vx === 0) ? Math.round(Math.sin(T / 300)) : 0;
   const air = !p.onGround;
+  // squash & stretch: stretch tall in the air, flatten on landing
+  let sx = 1, sy = 1;
+  if (air) { const st = Math.max(-0.3, Math.min(0.3, -p.vy * 0.025)); sy = 1 + st; sx = 1 - st; }
+  else if (p.squash > 0.05) { sy = 1 - 0.32 * p.squash; sx = 1 + 0.32 * p.squash; }
   ctx.save();
-  ctx.translate(p.x + p.w/2, p.y + p.h/2 + bob);
-  ctx.scale(f, 1);
-  ctx.translate(-p.w/2, -p.h/2);
+  ctx.translate(p.x + p.w/2, p.y + p.h + bob);  // anchor at feet
+  ctx.scale(f * sx, sy);
+  ctx.translate(-p.w/2, -p.h);
   const B = "#28c4ff", BL = "#8fe4ff", D = "#0a7bcc", K = "#06263a", WI = "#ffffff", Y = "#ffe24a";
   // soft electric glow
   ctx.fillStyle = "rgba(60,200,255,0.20)";
@@ -649,14 +697,17 @@ function drawHUD() {
 }
 
 function drawScene() {
-  // background: night-sky gradient
+  const T = performance.now();
+  // screen-shake: jolt the whole world layer
+  ctx.save();
+  if (shake) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+  // background: night-sky gradient (over-drawn so shake never reveals edges)
   const grd = ctx.createLinearGradient(0, 0, 0, H);
   grd.addColorStop(0, "#10122b");
   grd.addColorStop(0.5, "#0a0a18");
   grd.addColorStop(1, "#05050c");
   ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, W, H);
-  const T = performance.now();
+  ctx.fillRect(-16, -16, W + 32, H + 32);
   // moon with craters
   ctx.fillStyle = "#26264a";
   ctx.beginPath(); ctx.arc(W - 66, 72, 34, 0, Math.PI * 2); ctx.fill();
@@ -696,6 +747,28 @@ function drawScene() {
   }
   ctx.globalAlpha = 1;
   drawHero(player);
+  // debris bits
+  for (const b of bits) {
+    ctx.globalAlpha = Math.min(1, b.life);
+    px(b.x - 1, b.y - 1, 2, 2, b.c);
+  }
+  // floating score popups
+  ctx.textAlign = "center";
+  ctx.font = "bold 12px 'Courier New', monospace";
+  for (const pp of popups) {
+    ctx.globalAlpha = Math.min(1, pp.life * 1.4);
+    ctx.fillStyle = "#000";
+    ctx.fillText(pp.text, pp.x + 1, pp.y + 1);
+    ctx.fillStyle = pp.c;
+    ctx.fillText(pp.text, pp.x, pp.y);
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  // full-screen flash (hit / win)
+  if (flash > 0.02) {
+    ctx.fillStyle = "rgba(" + flashCol + "," + (flash * 0.45).toFixed(2) + ")";
+    ctx.fillRect(0, 0, W, H);
+  }
   drawHUD();
 }
 
@@ -778,8 +851,19 @@ function drawGameOver() {
     center("PRESS ENTER TO PLAY AGAIN", H/2 + 80, "#ffd27f", 16);
 }
 
+// ---------- Effects stepping (runs every frame, all states) ----------
+function updateFx() {
+  shake *= 0.85; if (shake < 0.3) shake = 0;
+  flash *= 0.90; if (flash < 0.02) flash = 0;
+  for (const b of bits) { b.x += b.vx; b.y += b.vy; b.vy += 0.18; b.life -= 0.04; }
+  bits = bits.filter(b => b.life > 0);
+  for (const pp of popups) { pp.y -= 0.6; pp.life -= 0.02; }
+  popups = popups.filter(pp => pp.life > 0);
+}
+
 // ---------- Main loop ----------
 function loop() {
+  updateFx();
   switch (state) {
     case "title":
       if (keys.start) { startGame(); keys.start = false; }
