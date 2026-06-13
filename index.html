@@ -163,39 +163,47 @@ const RUN = 1.8;
 const JUMP_V = -8.2;
 const TILE = 16;
 
-// Level geometry: platforms are horizontal beams (Donkey-Kong style, slightly sloped feel via steps)
-// Each platform: {x, y, w} ; ladders: {x, y, h}
-// Built bottom-up. y is top surface.
-function buildLevel() {
+// Level geometry: 6 girders (fixed spacing so the boss/captive always sit
+// on the top floor), with ladder layouts that vary per level.
+const LADDER_LAYOUTS = [
+  // each entry [lowerFloorIndex, x] connects floor i and i+1
+  [[0,360],[1,90],[2,360],[3,90],[4,300],[0,200],[2,230]],
+  [[0,80],[1,330],[2,120],[3,300],[4,150],[1,210],[3,250]],
+  [[0,300],[1,150],[2,330],[3,80],[4,360],[0,130],[2,210]],
+  [[0,200],[1,360],[2,90],[3,330],[4,120],[1,270],[3,160]],
+];
+function ladderLayout(n) {
+  if (n <= LADDER_LAYOUTS.length) return LADDER_LAYOUTS[n - 1];
+  // procedural for deeper levels: zig-zag with a couple of extra routes
+  const cols = [];
+  let left = (n % 2) === 0;
+  for (let i = 0; i < 5; i++) {
+    const x = left ? 70 + Math.floor(Math.random() * 90) : 290 + Math.floor(Math.random() * 90);
+    cols.push([i, x]); left = !left;
+  }
+  cols.push([Math.floor(Math.random() * 4), 170 + Math.floor(Math.random() * 100)]);
+  cols.push([Math.floor(Math.random() * 4), 170 + Math.floor(Math.random() * 100)]);
+  return cols;
+}
+function buildLevel(n) {
   const platforms = [];
   const ladders = [];
-  // 6 girders
   const floors = [];
   const baseY = H - 24;
   const gap = 76;
   for (let i = 0; i < 6; i++) {
     const y = baseY - i * gap;
-    // alternate slight offset so it feels like classic slanted girders
     floors.push(y);
     platforms.push({ x: 0, y, w: W, top: true });
   }
-  // Ladders connecting floors (zig-zag)
-  // floor index 0 = bottom
-  const ladderCols = [
-    [0, 360], [1, 90], [2, 360], [3, 90], [4, 300],
-  ];
-  for (const [fi, x] of ladderCols) {
+  for (const [fi, x] of ladderLayout(n)) {
     const yTop = floors[fi + 1];
     const yBot = floors[fi];
     ladders.push({ x, y: yTop, h: yBot - yTop, bottom: yBot, top: yTop });
   }
-  // a couple of extra ladders for routes
-  ladders.push({ x: 200, y: floors[1], h: floors[0]-floors[1], bottom: floors[0], top: floors[1] });
-  ladders.push({ x: 230, y: floors[3], h: floors[2]-floors[3], bottom: floors[2], top: floors[3] });
-
   return { platforms, ladders, floors, baseY };
 }
-let level = buildLevel();
+let level = buildLevel(1);
 
 // ---------- Entities ----------
 const player = {
@@ -234,7 +242,7 @@ function spawnBits(x, y, n, col) {
 function spawnBarrel() {
   barrels.push({
     x: kong.x + kong.w, y: kong.y + kong.h - 14,
-    vx: 1.4, vy: -1.8, w: 13, h: 16,   // tossed up, then arcs down onto the girder
+    vx: 1.4 + Math.min(1.3, (level_num - 1) * 0.18), vy: -1.8, w: 13, h: 16,
     onLadder: false, floor: 5, rot: 0,
   });
   throwFx.push({ x: kong.x + kong.w + 6, y: kong.y + kong.h - 16, life: 1 });
@@ -255,7 +263,9 @@ let palette = levelPalette(1);
 
 // ---------- State machine ----------
 let state = "title"; // title, splash, play, dead, win, gameover
-let score = 0, lives = 3, level_num = 1, bestScore = 0;
+let score = 0, lives = 3, level_num = 1, bestScore = readBest();
+function readBest() { try { return parseInt(localStorage.getItem("chenkong_best")) || 0; } catch (e) { return 0; } }
+function updateBest() { if (score > bestScore) { bestScore = score; try { localStorage.setItem("chenkong_best", String(bestScore)); } catch (e) {} } }
 let stateTimer = 0;
 let bonus = 5000;
 let splashT = 0;            // logo-sting timer
@@ -277,7 +287,7 @@ function startSplash(label, next) {
   SFX.logo();
 }
 function newLevel() {
-  level = buildLevel();
+  level = buildLevel(level_num);
   resetPlayer();
   barrels = [];
   trail = [];
@@ -296,7 +306,7 @@ function loseLife() {
   addShake(13);
   flash = 1; flashCol = "255,60,90";
   spawnBits(player.x + player.w/2, player.y + player.h/2, 14, "#7fe0ff");
-  if (lives <= 0) { state = "gameover"; stateTimer = 0; bestScore = Math.max(bestScore, score); }
+  if (lives <= 0) { state = "gameover"; stateTimer = 0; updateBest(); }
   else { state = "dead"; stateTimer = 0; }
 }
 
@@ -509,6 +519,7 @@ function updatePlay() {
   // ----- Win check -----
   if (rectsOverlap(p, goal)) {
     score += bonus + 1000;
+    updateBest();
     state = "win"; stateTimer = 0; SFX.win();
     addShake(8);
     flash = 1; flashCol = "255,210,120";
@@ -895,9 +906,14 @@ function drawDead() {
 }
 function drawWin() {
   drawScene();
-  ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(0, 0, W, H);
+  const pulse = 1 + 0.06 * Math.sin(stateTimer / 5);
+  ctx.save();
+  ctx.translate(W/2, H/2 - 20); ctx.scale(pulse, pulse); ctx.translate(-W/2, -(H/2 - 20));
   center("RESCUED!", H/2 - 20, "#ffd27f", 34);
-  center("Next level...", H/2 + 16, "#fff", 16);
+  ctx.restore();
+  center("Level " + level_num + " cleared", H/2 + 14, "#fff", 16);
+  center("Score " + String(score).padStart(6, "0"), H/2 + 38, "#39c0ff", 14);
 }
 function drawGameOver() {
   ctx.fillStyle = "#0a0a12"; ctx.fillRect(0,0,W,H);
@@ -941,9 +957,10 @@ function loop() {
       if (stateTimer > 80) { resetPlayer(); barrels = []; state = "play"; }
       break;
     case "win":
+      if (stateTimer % 8 === 0) addPopup(goal.x + (Math.random() * 34 - 12), goal.y - 4, "♥", "#ff7fb0");
       drawWin();
       stateTimer++;
-      if (stateTimer > 70) { level_num++; newLevel(); startSplash("LEVEL " + level_num, () => { state = "play"; }); }
+      if (stateTimer > 110) { level_num++; newLevel(); startSplash("LEVEL " + level_num, () => { state = "play"; }); }
       break;
     case "gameover":
       drawGameOver();
