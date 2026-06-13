@@ -89,6 +89,7 @@
 </head>
 <body>
 <div id="topbar">
+  <div class="ico" id="pauseBtn" title="Pause">⏸</div>
   <div class="ico" id="muteBtn" title="Sound on/off">🔊</div>
   <div class="ico" id="shareBtn" title="Share score">⤴</div>
 </div>
@@ -182,6 +183,28 @@ function shareScore() {
 }
 shareBtn.addEventListener("click", e => { e.preventDefault(); shareScore(); });
 
+// ---------- Pause ----------
+const pauseBtn = document.getElementById("pauseBtn");
+function togglePause() {
+  if (state !== "play") return;
+  paused = !paused;
+  pauseBtn.textContent = paused ? "▶" : "⏸";
+}
+pauseBtn.addEventListener("click", e => { e.preventDefault(); togglePause(); });
+addEventListener("keydown", e => { if (e.code === "KeyP") togglePause(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && state === "play") { paused = true; pauseBtn.textContent = "▶"; }
+});
+
+// ---------- High-score initials entry (physical keyboard typing) ----------
+addEventListener("keydown", e => {
+  if (state !== "entry") return;
+  if (e.code.length === 4 && e.code.startsWith("Key")) {
+    entry[entryPos] = e.code.charCodeAt(3) - 65;
+    entryPos = Math.min(2, entryPos + 1);
+  } else if (e.code === "Backspace") { entryPos = Math.max(0, entryPos - 1); }
+});
+
 // ---------- Tiny sound engine (WebAudio, no files) ----------
 let actx = null;
 function audio() {
@@ -236,7 +259,7 @@ function startMusic() {
   if (musicTimer) return;
   musicStep = 0;
   musicTimer = setInterval(() => {
-    if (muted) return;
+    if (muted || paused) return;
     const s = musicStep % 16;
     mnote(BASS[s], 0.18, "triangle", 0.05);
     if (s % 2 === 0) mnote(LEAD[s], 0.12, "square", 0.022);
@@ -410,9 +433,32 @@ const ITEM_DEFS = {
 };
 let items = [];        // {x,y,w,h,type,taken,bob}
 let muted = false;     // sound toggle
+let paused = false;    // pause state
 let combo = 0, comboTimer = 0;
 const FINAL_LEVEL = 5; // beat this level to defeat Chen Kong
 let kongFall = 0;      // boss-defeat animation progress
+
+// ---------- Local leaderboard ----------
+const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let entry = [0, 0, 0];   // initials being entered (indices into ALPHA)
+let entryPos = 0;        // active initial slot
+let afterEntry = null;   // where to go after submitting
+let entryHi = -1;        // index of the freshly added board row (for highlight)
+function readBoard() { try { return JSON.parse(localStorage.getItem("chenkong_board")) || []; } catch (e) { return []; } }
+function saveBoard(b) { try { localStorage.setItem("chenkong_board", JSON.stringify(b)); } catch (e) {} }
+function qualifies(s) { if (s <= 0) return false; const b = readBoard(); return b.length < 5 || s > b[b.length - 1].score; }
+function startEntry(next) { state = "entry"; entry = [0, 0, 0]; entryPos = 0; afterEntry = next; stateTimer = 0; keys.start = false; }
+function submitEntry() {
+  const name = entry.map(i => ALPHA[i]).join("");
+  const b = readBoard();
+  b.push({ name, score });
+  b.sort((a, c) => c.score - a.score);
+  if (b.length > 5) b.length = 5;
+  saveBoard(b);
+  entryHi = b.findIndex(e => e.name === name && e.score === score);
+  const fn = afterEntry; afterEntry = null;
+  if (fn) fn();
+}
 
 function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
 
@@ -431,6 +477,8 @@ let splashTaunt = "";       // boss taunt under the caption
 function startGame() {
   score = 0; lives = DIFF[difficulty].lives; level_num = 1;
   combo = 0; comboTimer = 0;
+  entryHi = -1;
+  paused = false; pauseBtn.textContent = "⏸";
   newLevel();
   startMusic();
   startSplash("LEVEL 1", () => { state = "play"; });
@@ -477,7 +525,11 @@ function loseLife() {
   addShake(13);
   flash = 1; flashCol = "255,60,90";
   spawnBits(player.x + player.w/2, player.y + player.h/2, 14, "#7fe0ff");
-  if (lives <= 0) { state = "gameover"; stateTimer = 0; updateBest(); stopMusic(); }
+  if (lives <= 0) {
+    updateBest(); stopMusic();
+    if (qualifies(score)) startEntry(() => { state = "gameover"; stateTimer = 0; });
+    else { entryHi = -1; state = "gameover"; stateTimer = 0; }
+  }
   else { state = "dead"; stateTimer = 0; }
 }
 
@@ -1218,13 +1270,25 @@ function drawWin() {
 }
 function drawGameOver() {
   ctx.fillStyle = "#0a0a12"; ctx.fillRect(0,0,W,H);
-  center("GAME OVER", H/2 - 30, "#ff5b76", 38);
-  center("Score  " + score, H/2 + 10, "#fff", 18);
-  center("Best   " + bestScore, H/2 + 36, "#6a6a8a", 14);
-  if (score >= bestScore && score > 0) center("★ NEW BEST! ★", H/2 + 58, "#ffd27f", 14);
+  center("GAME OVER", 70, "#ff5b76", 38);
+  center("Score  " + score, 106, "#fff", 18);
+  // leaderboard
+  center("— HIGH SCORES —", 150, "#39c0ff", 15);
+  const board = readBoard();
+  ctx.font = "16px 'Courier New', monospace";
+  if (board.length === 0) center("no scores yet", 184, "#4a4a6a", 13);
+  for (let i = 0; i < board.length; i++) {
+    const y = 180 + i * 26;
+    const hi = i === entryHi;
+    ctx.fillStyle = hi ? "#ffd27f" : "#cfe8ff";
+    ctx.textAlign = "left";
+    ctx.fillText((i + 1) + ".  " + board[i].name, W/2 - 90, y);
+    ctx.textAlign = "right";
+    ctx.fillText(String(board[i].score).padStart(6, "0"), W/2 + 90, y);
+  }
   if ((performance.now()/500|0) % 2 === 0)
-    center("PRESS ENTER / TAP JUMP TO PLAY AGAIN", H/2 + 86, "#ffd27f", 14);
-  center("tap ⤴ (top-right) to share your score", H/2 + 112, "#6a6a8a", 12);
+    center("PRESS ENTER / TAP JUMP TO PLAY AGAIN", H - 70, "#ffd27f", 14);
+  center("tap ⤴ (top-right) to share your score", H - 46, "#6a6a8a", 12);
 }
 
 function drawVictory() {
@@ -1269,6 +1333,32 @@ function drawVictory() {
     center("PRESS ENTER / TAP JUMP TO PLAY AGAIN", H - 70, "#ffd27f", 14);
 }
 
+function drawPauseOverlay() {
+  ctx.fillStyle = "rgba(5,6,14,0.7)"; ctx.fillRect(0, 0, W, H);
+  center("PAUSED", H / 2 - 12, "#39c0ff", 34);
+  center("tap ▶ (top-right) or press P to resume", H / 2 + 24, "#cfe8ff", 13);
+}
+function drawEntry() {
+  ctx.fillStyle = "#0a0a12"; ctx.fillRect(0, 0, W, H);
+  center("NEW HIGH SCORE!", 120, "#ffd27f", 30);
+  center("Score " + String(score).padStart(6, "0"), 152, "#39c0ff", 16);
+  center("enter your initials", 184, "#cfe8ff", 14);
+  // three big initial slots
+  const blink = (performance.now() / 350 | 0) % 2 === 0;
+  ctx.font = "bold 48px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  for (let i = 0; i < 3; i++) {
+    const cx = W / 2 + (i - 1) * 56;
+    const active = i === entryPos;
+    ctx.fillStyle = active ? (blink ? "#ffd27f" : "#ff9a56") : "#cfe8ff";
+    ctx.fillText(ALPHA[entry[i]], cx, 256);
+    ctx.fillStyle = active ? "#ffd27f" : "#3a4a7a";
+    ctx.fillRect(cx - 18, 268, 36, 3);
+  }
+  center("▲▼ letter   ◀▶ slot   ENTER / JUMP  confirm", 320, "#6a6a8a", 12);
+  center("(or just type on a keyboard)", 340, "#4a4a6a", 11);
+}
+
 // ---------- Effects stepping (runs every frame, all states) ----------
 function updateFx() {
   shake *= 0.85; if (shake < 0.3) shake = 0;
@@ -1280,7 +1370,8 @@ function updateFx() {
 }
 
 // ---------- Main loop ----------
-let lrLock = false; // debounce difficulty selection on the title
+let lrLock = false;  // debounce difficulty selection on the title
+let navLock = false; // debounce initials entry
 function loop() {
   updateFx();
   switch (state) {
@@ -1297,8 +1388,18 @@ function loop() {
       if (splashT > 80) { const fn = afterSplash; afterSplash = null; if (fn) fn(); }
       break;
     case "play":
-      updatePlay();
-      if (state === "play") drawScene();
+      if (paused) { drawScene(); drawPauseOverlay(); }
+      else { updatePlay(); if (state === "play") drawScene(); }
+      break;
+    case "entry":
+      if ((keys.up || keys.down) && !navLock) {
+        entry[entryPos] = (entry[entryPos] + (keys.up ? 1 : 25)) % 26; navLock = true; SFX.climb();
+      } else if (keys.left && !navLock) { entryPos = (entryPos + 2) % 3; navLock = true; SFX.pickup(); }
+      else if (keys.right && !navLock) { entryPos = (entryPos + 1) % 3; navLock = true; SFX.pickup(); }
+      else if (!keys.up && !keys.down && !keys.left && !keys.right) navLock = false;
+      if (keys.start && stateTimer > 8) { keys.start = false; SFX.point(); submitEntry(); }
+      drawEntry();
+      stateTimer++;
       break;
     case "dead":
       drawDead();
@@ -1324,7 +1425,11 @@ function loop() {
       if (kongFall < 1) kongFall = Math.min(1, kongFall + 0.012);
       drawVictory();
       stateTimer++;
-      if (stateTimer > 70 && keys.start) { keys.start = false; state = "title"; }
+      if (stateTimer > 70 && keys.start) {
+        keys.start = false;
+        if (qualifies(score)) startEntry(() => { state = "title"; });
+        else state = "title";
+      }
       break;
     case "gameover":
       drawGameOver();
