@@ -90,6 +90,12 @@ const ctx = canvas.getContext("2d");
 const W = canvas.width, H = canvas.height;
 ctx.imageSmoothingEnabled = false;
 
+// Reveal Risk brand logo (shown bursting in/out between levels)
+const logoImg = new Image();
+let logoReady = false;
+logoImg.onload = () => { logoReady = true; };
+logoImg.src = "revealrisk-logo.jpg";
+
 // ---------- Input ----------
 const keys = {};
 const KEYMAP = {
@@ -147,6 +153,7 @@ const SFX = {
   throw: () => beep(220, 0.12, "sawtooth", 0.05),
   land: () => beep(110, 0.09, "triangle", 0.07),
   smash: () => { beep(200, 0.08, "square", 0.05); beep(90, 0.12, "sawtooth", 0.05); },
+  logo: () => { [330, 494, 659, 880].forEach((f,i)=>setTimeout(()=>beep(f, 0.22, "triangle", 0.07), i*70)); },
   start: () => { [392,523,659].forEach((f,i)=>setTimeout(()=>beep(f,0.12,"square",0.07), i*100)); },
 };
 
@@ -247,16 +254,27 @@ function levelPalette(n) {
 let palette = levelPalette(1);
 
 // ---------- State machine ----------
-let state = "title"; // title, play, dead, win, gameover
+let state = "title"; // title, splash, play, dead, win, gameover
 let score = 0, lives = 3, level_num = 1, bestScore = 0;
 let stateTimer = 0;
 let bonus = 5000;
+let splashT = 0;            // logo-sting timer
+let afterSplash = null;     // what to do once the sting finishes
+let splashLabel = "";       // caption under the logo
 
 function startGame() {
   score = 0; lives = 3; level_num = 1;
   newLevel();
-  state = "play";
-  SFX.start();
+  startSplash("LEVEL 1", () => { state = "play"; });
+}
+// Burst the Reveal Risk logo into view, then fade, then run `next`.
+function startSplash(label, next) {
+  state = "splash";
+  splashT = 0;
+  splashLabel = label;
+  afterSplash = next;
+  addShake(7);
+  SFX.logo();
 }
 function newLevel() {
   level = buildLevel();
@@ -811,6 +829,45 @@ function center(text, y, c="#fff", size=20) {
   ctx.fillText(text, W/2, y);
 }
 
+// Overshooting ease for the burst
+function easeOutBack(x) {
+  const c1 = 1.70158, c3 = c1 + 1;
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+}
+// Draw the Reveal Risk logo clipped to a clean circle (no white corners)
+function drawLogo(cx, cy, r, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  if (logoReady) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+    ctx.imageSmoothingEnabled = true;
+    const s = r * 2 * 1.04;                 // slight overscan to crop the JPEG's white margin
+    ctx.drawImage(logoImg, cx - s/2, cy - s/2, s, s);
+    ctx.imageSmoothingEnabled = false;
+  } else {
+    // fallback brand circle while the image loads
+    ctx.fillStyle = "#1a5fb4";
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#0d2b6b";
+    ctx.beginPath(); ctx.arc(cx, cy, r, -0.5, Math.PI - 0.5); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawSplash() {
+  ctx.fillStyle = "#0a0a12"; ctx.fillRect(0, 0, W, H);
+  const t = splashT, D = 80;
+  let scale, alpha;
+  if (t < 24) { scale = easeOutBack(t / 24); alpha = Math.min(1, t / 8); }   // burst in
+  else if (t < 52) { scale = 1; alpha = 1; }                                  // hold
+  else { const k = (t - 52) / (D - 52); scale = 1 + k * 0.18; alpha = 1 - k; } // fade out
+  const r = Math.max(0.01, 130 * scale);
+  drawLogo(W/2, H * 0.42, r, alpha);
+  ctx.globalAlpha = alpha;
+  center("REVEAL RISK", H * 0.42 + r + 34, "#3f8ed6", 26);
+  if (splashLabel) center(splashLabel, H * 0.42 + r + 60, "#cfe8ff", 15);
+  ctx.globalAlpha = 1;
+}
+
 function drawTitle() {
   ctx.fillStyle = "#0a0a12"; ctx.fillRect(0,0,W,H);
   // draw kong big in middle
@@ -869,6 +926,11 @@ function loop() {
       if (keys.start) { startGame(); keys.start = false; }
       drawTitle();
       break;
+    case "splash":
+      drawSplash();
+      splashT++;
+      if (splashT > 80) { const fn = afterSplash; afterSplash = null; if (fn) fn(); }
+      break;
     case "play":
       updatePlay();
       if (state === "play") drawScene();
@@ -881,7 +943,7 @@ function loop() {
     case "win":
       drawWin();
       stateTimer++;
-      if (stateTimer > 110) { level_num++; newLevel(); state = "play"; }
+      if (stateTimer > 70) { level_num++; newLevel(); startSplash("LEVEL " + level_num, () => { state = "play"; }); }
       break;
     case "gameover":
       drawGameOver();
