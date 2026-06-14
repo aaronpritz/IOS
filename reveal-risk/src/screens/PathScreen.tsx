@@ -14,7 +14,7 @@ interface Props {
 }
 
 // Future domains shown as a locked roadmap rail (their lessons unlock later).
-const LOCKED_DOMAINS = ['social_eng', 'data_handling', 'physical', 'ai_deepfakes'];
+const LOCKED_DOMAINS = ['social_eng', 'data_handling', 'physical'];
 
 /** Home: an ordered learning path whose nodes unlock as you complete lessons. */
 export function PathScreen({ onStartLesson }: Props) {

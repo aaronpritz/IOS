@@ -1,11 +1,15 @@
 import { Lesson } from './types';
 import { PHISHING_LESSON } from './phishingLesson';
 import { PASSWORDS_LESSON } from './passwordsLesson';
+import { FAKE_LOGIN_LESSON } from './fakeLoginLesson';
+import { DEEPFAKE_LESSON } from './deepfakeLesson';
 
 /** All lessons keyed by id. The backend serves these from the `lessons` table. */
 export const LESSONS: Record<string, Lesson> = {
   [PHISHING_LESSON.id]: PHISHING_LESSON,
   [PASSWORDS_LESSON.id]: PASSWORDS_LESSON,
+  [FAKE_LOGIN_LESSON.id]: FAKE_LOGIN_LESSON,
+  [DEEPFAKE_LESSON.id]: DEEPFAKE_LESSON,
 };
 
 export function getLesson(id: string): Lesson {
@@ -24,8 +28,8 @@ export interface JourneyNode {
 export const PATH_NODES: JourneyNode[] = [
   { id: 'n1', lessonId: PHISHING_LESSON.id, title: 'Spot the Phish', icon: '🎣', domainKey: 'phishing' },
   { id: 'n2', lessonId: PASSWORDS_LESSON.id, title: 'Strong Passwords', icon: '🔑', domainKey: 'passwords' },
-  { id: 'n3', lessonId: null, title: 'Fake Login Pages', icon: '🪪', domainKey: 'phishing' },
-  { id: 'n4', lessonId: null, title: 'Deepfake Voices', icon: '🤖', domainKey: 'ai_deepfakes' },
+  { id: 'n3', lessonId: FAKE_LOGIN_LESSON.id, title: 'Fake Login Pages', icon: '🪪', domainKey: 'phishing' },
+  { id: 'n4', lessonId: DEEPFAKE_LESSON.id, title: 'Deepfake Voices', icon: '🤖', domainKey: 'ai_deepfakes' },
 ];
 
 /** Lessons that belong to each domain (for mastery %). */
