@@ -14,3 +14,8 @@
 // sits cleanly on any surface. Falls back to the SVG Mascot via SparkAvatar.
 export const MASCOT_IMAGE_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_37GLwKjrjpEszcw5O6GtA2PPSHq/hf_20260614_203927_175b1e8f-5b7e-4bdf-8333-bacf93333771.png';
+
+// Celebrating Spark (arms up, mid-jump), background removed — used in the
+// milestone celebration overlay. Falls back to the SVG/cheer avatar.
+export const CELEBRATION_SPARK_URL =
+  'https://d8j0ntlcm91z4.cloudfront.net/user_37GLwKjrjpEszcw5O6GtA2PPSHq/hf_20260614_231412_56d77d84-4800-4f07-8168-f3e5445eee9d.png';

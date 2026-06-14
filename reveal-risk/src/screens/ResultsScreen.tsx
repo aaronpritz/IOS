@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { Button } from '../components/ui/Button';
 import { MysteryBox } from '../components/rewards/MysteryBox';
 import { SparkAvatar } from '../components/brand/SparkAvatar';
+import { CelebrationOverlay } from '../components/rewards/CelebrationOverlay';
 import { useGameStore, SessionResult, badgeMeta } from '../store/useGameStore';
 import { LessonSummary } from './LessonScreen';
 
@@ -12,15 +13,32 @@ interface Props {
   onDone: () => void;
 }
 
+const STREAK_MILESTONES = [3, 7, 14, 30, 50, 100];
+
 /** Session complete: streak increment, XP, accuracy, and the variable-reward mystery box. */
 export function ResultsScreen({ summary, onDone }: Props) {
   // Commit the session exactly once (updates streak / XP / badges).
   const [outcome, setOutcome] = useState<SessionResult | null>(null);
+  const [celebrated, setCelebrated] = useState(false);
+  const level = useGameStore((s) => s.level());
   useEffect(() => {
     const store = useGameStore.getState();
     store.markLessonComplete(summary.lessonId);
     setOutcome(store.completeSession(summary.xpEarned));
   }, []);
+
+  // Pick the celebration "cutscene" for a milestone, if any.
+  const celebration = useMemo(() => {
+    if (!outcome) return null;
+    if (outcome.leveledUp) return { title: 'Level Up!', subtitle: `You reached Level ${level}` };
+    if (outcome.streakIncreased && STREAK_MILESTONES.includes(outcome.streak))
+      return { title: `${outcome.streak}-Day Streak!`, subtitle: 'You’re on fire — keep it going' };
+    if (outcome.newBadge) {
+      const m = badgeMeta(outcome.newBadge);
+      return { title: 'Badge Unlocked!', subtitle: `${m.icon}  ${m.name}` };
+    }
+    return null;
+  }, [outcome, level]);
 
   if (!outcome) return null;
 
@@ -55,6 +73,14 @@ export function ResultsScreen({ summary, onDone }: Props) {
       <View style={{ flex: 1 }} />
 
       <Button label="Continue" onPress={onDone} />
+
+      {celebration && !celebrated && (
+        <CelebrationOverlay
+          title={celebration.title}
+          subtitle={celebration.subtitle}
+          onDone={() => setCelebrated(true)}
+        />
+      )}
     </View>
   );
 }
