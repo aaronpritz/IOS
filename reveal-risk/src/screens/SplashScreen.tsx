@@ -1,69 +1,44 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Pressable, ActivityIndicator } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { colors, font, radius } from '../theme/tokens';
-import { Mascot } from '../components/brand/Mascot';
-import { TITLE_SCREEN_URL } from '../data/assets';
+import { SparkAvatar } from '../components/brand/SparkAvatar';
 
 interface Props {
   onDone: () => void;
 }
 
 /**
- * Opening splash using the Higgsfield-generated CyberSpark title graphic (loaded
- * by URL). Auto-dismisses after a beat or on tap. If the image can't load, a
- * branded fallback (SVG Spark + wordmark) shows instead.
+ * Opening splash — designed natively (no device-mockup image) so it always looks
+ * right. Transparent illustrated Spark on a branded navy backdrop with the
+ * CyberSpark wordmark. Auto-dismisses after a beat, or tap to skip.
  */
 export function SplashScreen({ onDone }: Props) {
-  const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
   useEffect(() => {
-    const t = setTimeout(onDone, 2800);
+    const t = setTimeout(onDone, 2600);
     return () => clearTimeout(t);
   }, [onDone]);
 
   return (
     <Pressable style={styles.root} onPress={onDone} accessibilityLabel="Skip intro">
-      {!failed ? (
-        <>
-          <Image
-            source={{ uri: TITLE_SCREEN_URL }}
-            style={styles.image}
-            resizeMode="cover"
-            onLoad={() => setLoaded(true)}
-            onError={() => setFailed(true)}
-          />
-          {!loaded && (
-            <View style={styles.loadingOverlay}>
-              <Mascot size={96} mood="cheer" />
-              <ActivityIndicator color="#fff" style={{ marginTop: 16 }} />
-            </View>
-          )}
-        </>
-      ) : (
-        <Fallback />
-      )}
+      {/* Ambient brand glow */}
+      <View style={[styles.glow, styles.glowTop]} />
+      <View style={[styles.glow, styles.glowBottom]} />
 
-      <View style={styles.tapHint} pointerEvents="none">
-        <Text style={styles.tapHintText}>tap to start</Text>
+      <View style={styles.center}>
+        <SparkAvatar size={150} mood="cheer" />
+        <Text style={styles.wordmark}>
+          Cyber<Text style={{ color: colors.primary }}>Spark</Text>
+        </Text>
+        <Text style={styles.tagline}>Cyber skills, one streak at a time</Text>
+      </View>
+
+      <View style={styles.bottom} pointerEvents="none">
+        <View style={styles.byTag}>
+          <Text style={styles.byText}>by Reveal Risk</Text>
+        </View>
+        <Text style={styles.tapHint}>tap to start</Text>
       </View>
     </Pressable>
-  );
-}
-
-/** Branded fallback if the title graphic can't be fetched. */
-function Fallback() {
-  return (
-    <View style={styles.fallback}>
-      <Mascot size={132} mood="cheer" />
-      <Text style={styles.wordmark}>
-        Cyber<Text style={{ color: colors.primary }}>Spark</Text>
-      </Text>
-      <Text style={styles.tagline}>Cyber skills, one streak at a time</Text>
-      <View style={styles.byTag}>
-        <Text style={styles.byText}>by Reveal Risk</Text>
-      </View>
-    </View>
   );
 }
 
@@ -77,24 +52,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.navy,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     zIndex: 100,
   },
-  image: { width: '100%', height: '100%' },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.navy,
-  },
-  fallback: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24 },
-  wordmark: { fontSize: 40, fontWeight: '900', color: '#fff', marginTop: 8 },
+  glow: { position: 'absolute', width: 320, height: 320, borderRadius: 160, opacity: 0.18 },
+  glowTop: { backgroundColor: colors.primary, top: -120, right: -90 },
+  glowBottom: { backgroundColor: colors.gem, bottom: -110, left: -80 },
+  center: { alignItems: 'center', gap: 10, paddingHorizontal: 24 },
+  wordmark: { fontSize: 44, fontWeight: '900', color: '#fff', marginTop: 10, letterSpacing: 0.5 },
   tagline: { fontSize: font.h3, color: 'rgba(255,255,255,0.85)', fontWeight: '600', textAlign: 'center' },
+  bottom: { position: 'absolute', bottom: 34, alignItems: 'center', gap: 12 },
   byTag: {
-    marginTop: 8,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
     borderRadius: radius.pill,
@@ -102,6 +70,5 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   byText: { color: 'rgba(255,255,255,0.85)', fontWeight: '700', fontSize: font.small },
-  tapHint: { position: 'absolute', bottom: 28 },
-  tapHintText: { color: 'rgba(255,255,255,0.8)', fontWeight: '700', fontSize: font.small, letterSpacing: 1 },
+  tapHint: { color: 'rgba(255,255,255,0.7)', fontWeight: '700', fontSize: font.small, letterSpacing: 1 },
 });

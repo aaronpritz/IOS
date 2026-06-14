@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { Hud } from '../components/hud/Hud';
-import { Mascot } from '../components/brand/Mascot';
+import { SparkAvatar } from '../components/brand/SparkAvatar';
 import { Button } from '../components/ui/Button';
 import { PHISHING_PATH, PHISHING_LESSON } from '../data/phishingLesson';
 import { THREAT_DOMAINS } from '../data/domains';
@@ -31,7 +31,7 @@ export function PathScreen({ onStartLesson }: Props) {
       <ScrollView contentContainerStyle={{ paddingBottom: 28 }}>
         {/* Mascot greeting */}
         <View style={styles.greet}>
-          <Mascot size={68} />
+          <SparkAvatar size={68} />
           <View style={styles.speech}>
             <Text style={styles.speechText}>
               {doneToday
