@@ -5,7 +5,8 @@ import { Button } from '../components/ui/Button';
 import { SpotThePhish } from '../components/challenges/SpotThePhish';
 import { Mcq } from '../components/challenges/Mcq';
 import { BranchingScenario } from '../components/challenges/BranchingScenario';
-import { PHISHING_LESSON } from '../data/phishingLesson';
+import { PasswordStrength } from '../components/challenges/PasswordStrength';
+import { getLesson } from '../data/lessons';
 import { useGameStore } from '../store/useGameStore';
 
 export interface LessonSummary {
@@ -23,7 +24,7 @@ interface Props {
 
 /** The full-screen lesson player that drives the challenge sequence. */
 export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
-  const lesson = PHISHING_LESSON; // only lesson in the prototype
+  const lesson = getLesson(lessonId);
   const hearts = useGameStore((s) => s.hearts);
   const loseHeart = useGameStore((s) => s.loseHeart);
   const refillHearts = useGameStore((s) => s.refillHearts);
@@ -102,6 +103,10 @@ export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
         {challenge.type === 'branching_scenario' &&
           challenge.payload.type === 'branching_scenario' && (
             <BranchingScenario payload={challenge.payload} onResult={handleResult} />
+          )}
+        {challenge.type === 'password_strength' &&
+          challenge.payload.type === 'password_strength' && (
+            <PasswordStrength payload={challenge.payload} onResult={handleResult} />
           )}
       </View>
 

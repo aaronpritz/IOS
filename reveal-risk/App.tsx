@@ -20,7 +20,13 @@ export default function App() {
   const [flow, setFlow] = useState<Flow>('home');
   const [view, setView] = useState<ViewMode>('employee');
   const [summary, setSummary] = useState<LessonSummary | null>(null);
+  const [activeLesson, setActiveLesson] = useState('lesson_phish_01');
   const [showSplash, setShowSplash] = useState(true);
+
+  const startLesson = (lessonId: string) => {
+    setActiveLesson(lessonId);
+    setFlow('lesson');
+  };
 
   const advanceDay = useGameStore((s) => s.advanceDay);
   const resetProgress = useGameStore((s) => s.resetProgress);
@@ -53,14 +59,14 @@ export default function App() {
           ) : (
             <>
               {flow === 'home' && tab === 'learn' && (
-                <PathScreen onStartLesson={() => setFlow('lesson')} />
+                <PathScreen onStartLesson={startLesson} />
               )}
               {flow === 'home' && tab === 'leagues' && <LeaguesScreen />}
               {flow === 'home' && tab === 'profile' && <ProfileScreen />}
 
               {flow === 'lesson' && (
                 <LessonScreen
-                  lessonId="lesson_phish_01"
+                  lessonId={activeLesson}
                   onExit={() => setFlow('home')}
                   onComplete={(s) => {
                     setSummary(s);

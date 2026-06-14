@@ -18,7 +18,11 @@ export interface ThreatDomain {
   color: string;
 }
 
-export type ChallengeType = 'spot_the_phish' | 'mcq' | 'branching_scenario';
+export type ChallengeType =
+  | 'spot_the_phish'
+  | 'mcq'
+  | 'branching_scenario'
+  | 'password_strength';
 
 /** A single tappable region inside a spot-the-phish email. */
 export interface PhishHotspot {
@@ -82,7 +86,31 @@ export interface BranchingScenarioPayload {
   nodes: ScenarioNode[];
 }
 
-export type ChallengePayload = SpotThePhishPayload | McqPayload | BranchingScenarioPayload;
+/** One improvement the user can apply to a weak password. */
+export interface PasswordFix {
+  id: string;
+  label: string;
+  /** Strength points this fix contributes (0–100 scale across all fixes). */
+  points: number;
+  /** Shown after Check to teach why it matters. */
+  rationale: string;
+}
+
+export interface PasswordStrengthPayload {
+  type: 'password_strength';
+  prompt: string;
+  /** The weak starting password shown to the user. */
+  base: string;
+  fixes: PasswordFix[];
+  /** Strength (0–100) required to pass. */
+  threshold: number;
+}
+
+export type ChallengePayload =
+  | SpotThePhishPayload
+  | McqPayload
+  | BranchingScenarioPayload
+  | PasswordStrengthPayload;
 
 export interface Challenge {
   id: string;

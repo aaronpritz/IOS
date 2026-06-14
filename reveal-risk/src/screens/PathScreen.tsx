@@ -5,8 +5,18 @@ import { Hud } from '../components/hud/Hud';
 import { SparkAvatar } from '../components/brand/SparkAvatar';
 import { Button } from '../components/ui/Button';
 import { PHISHING_PATH, PHISHING_LESSON } from '../data/phishingLesson';
+import { PASSWORDS_LESSON } from '../data/passwordsLesson';
 import { THREAT_DOMAINS } from '../data/domains';
 import { useGameStore } from '../store/useGameStore';
+
+// Domains shown in the "Threat domains" rail. `lessonId` = playable; null = locked.
+const DOMAIN_RAIL: { key: string; lessonId: string | null }[] = [
+  { key: 'passwords', lessonId: PASSWORDS_LESSON.id },
+  { key: 'social_eng', lessonId: null },
+  { key: 'data_handling', lessonId: null },
+  { key: 'physical', lessonId: null },
+  { key: 'ai_deepfakes', lessonId: null },
+];
 
 interface Props {
   onStartLesson: (lessonId: string) => void;
@@ -40,6 +50,19 @@ export function PathScreen({ onStartLesson }: Props) {
             </Text>
           </View>
         </View>
+
+        {/* Today's threat — daily quest */}
+        <Pressable style={styles.quest} onPress={() => onStartLesson(PHISHING_LESSON.id)}>
+          <View style={styles.questIconWrap}>
+            <Text style={styles.questIcon}>⚡</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.questKicker}>TODAY’S THREAT</Text>
+            <Text style={styles.questTitle}>AI voice-clone scam hitting finance teams</Text>
+            <Text style={styles.questSub}>Spot the social-engineering red flags · +25 XP</Text>
+          </View>
+          <Text style={styles.questChevron}>▶</Text>
+        </Pressable>
 
         {/* Domain header */}
         <View style={[styles.domainHeader, { backgroundColor: domain.color }]}>
@@ -85,6 +108,35 @@ export function PathScreen({ onStartLesson }: Props) {
             );
           })}
         </View>
+
+        {/* Other threat domains */}
+        <Text style={styles.railLabel}>THREAT DOMAINS</Text>
+        <View style={styles.rail}>
+          {DOMAIN_RAIL.map((d) => {
+            const meta = THREAT_DOMAINS.find((t) => t.key === d.key)!;
+            const locked = d.lessonId === null;
+            return (
+              <Pressable
+                key={d.key}
+                disabled={locked}
+                onPress={() => d.lessonId && onStartLesson(d.lessonId)}
+                style={[styles.railCard, locked && styles.railCardLocked]}
+              >
+                <Text style={[styles.railIcon, locked && { opacity: 0.45 }]}>{meta.icon}</Text>
+                <Text style={[styles.railName, locked && { color: colors.locked }]} numberOfLines={1}>
+                  {meta.name}
+                </Text>
+                {locked ? (
+                  <Text style={styles.railLock}>🔒</Text>
+                ) : (
+                  <View style={[styles.railBadge, { backgroundColor: meta.color }]}>
+                    <Text style={styles.railBadgeText}>NEW</Text>
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
       </ScrollView>
 
       {/* Primary CTA */}
@@ -113,6 +165,49 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   speechText: { fontSize: font.small, fontWeight: '700', color: colors.text, lineHeight: 19 },
+  quest: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 14,
+    padding: 14,
+    borderRadius: radius.lg,
+    backgroundColor: colors.navy,
+  },
+  questIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  questIcon: { fontSize: 22 },
+  questKicker: { color: colors.streak, fontSize: font.tiny, fontWeight: '900', letterSpacing: 1 },
+  questTitle: { color: '#fff', fontSize: font.body, fontWeight: '800', marginTop: 1 },
+  questSub: { color: 'rgba(255,255,255,0.7)', fontSize: font.tiny, fontWeight: '600', marginTop: 2 },
+  questChevron: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
+  railLabel: { fontSize: font.tiny, fontWeight: '800', color: colors.textMuted, letterSpacing: 1, marginTop: 18, marginHorizontal: 16, marginBottom: 8 },
+  rail: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16 },
+  railCard: {
+    width: '47%',
+    flexGrow: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: 12,
+  },
+  railCardLocked: { backgroundColor: colors.surfaceAlt, borderStyle: 'dashed' },
+  railIcon: { fontSize: 22 },
+  railName: { flex: 1, fontSize: font.small, fontWeight: '700', color: colors.text },
+  railLock: { fontSize: 13 },
+  railBadge: { borderRadius: radius.pill, paddingHorizontal: 7, paddingVertical: 2 },
+  railBadgeText: { color: '#fff', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
   domainHeader: {
     flexDirection: 'row',
     alignItems: 'center',
