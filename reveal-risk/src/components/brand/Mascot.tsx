@@ -1,82 +1,94 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
+import Svg, { Path, G, Ellipse, Circle, Rect } from 'react-native-svg';
 import { colors } from '../../theme/tokens';
 
 /**
- * "Vault" — Reveal Risk's mascot, built entirely from primitives so it ships
- * with the app (no external image host required). A friendly emerald shield-buddy.
- *
- * An AI-generated illustrated version also exists; drop it in as assets/mascot.png
- * and swap this component for an <Image> once the asset host is allow-listed.
+ * "Spark" — Reveal Risk's mascot: a friendly blue spiky starburst character.
+ * Drawn as vector paths so it ships with the app (no external image host).
  */
+
+const SPARK = '#2AA9E6'; // Spark's signature azure blue
+const SPARK_DARK = '#1E8FCB';
+const SPARK_SHADE = '#1C86C2';
+
+/** Builds an N-point starburst polygon path string. */
+function starburst(cx: number, cy: number, outer: number, inner: number, points: number): string {
+  const step = Math.PI / points;
+  let d = '';
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outer : inner;
+    const a = i * step - Math.PI / 2;
+    const x = cx + r * Math.cos(a);
+    const y = cy + r * Math.sin(a);
+    d += `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)} `;
+  }
+  return d + 'Z';
+}
+
 export function Mascot({ size = 96, mood = 'happy' }: { size?: number; mood?: 'happy' | 'cheer' }) {
-  const s = size;
-  const eye = s * 0.2;
-  const pupil = eye * 0.5;
+  const W = size;
+  const H = size * 1.12;
+  const cheer = mood === 'cheer';
+  // Arm endpoints raise when cheering.
+  const armEndY = cheer ? 40 : 60;
 
   return (
-    <View style={{ width: s * 1.3, height: s * 1.18, alignItems: 'center', justifyContent: 'center' }}>
-      {/* Arms */}
-      <View style={[styles.arm, { left: s * 0.02, width: s * 0.16, height: s * 0.34, transform: [{ rotate: mood === 'cheer' ? '-35deg' : '12deg' }] }]} />
-      <View style={[styles.arm, { right: s * 0.02, width: s * 0.16, height: s * 0.34, transform: [{ rotate: mood === 'cheer' ? '35deg' : '-12deg' }] }]} />
+    <View style={{ width: W, height: H }}>
+      <Svg width={W} height={H} viewBox="0 0 120 134">
+        {/* Legs (behind body) */}
+        <G stroke={SPARK} strokeWidth={13} strokeLinecap="round">
+          <Path d="M50,90 L46,116" />
+          <Path d="M70,90 L74,116" />
+        </G>
+        {/* Feet */}
+        <Ellipse cx="44" cy="120" rx="9" ry="6" fill={SPARK_DARK} />
+        <Ellipse cx="76" cy="120" rx="9" ry="6" fill={SPARK_DARK} />
 
-      {/* Body / shield */}
-      <View style={[styles.body, { width: s, height: s, borderRadius: s * 0.34 }]}>
-        {/* gloss highlight */}
-        <View style={[styles.gloss, { width: s * 0.62, height: s * 0.26, borderRadius: s * 0.2, top: s * 0.1 }]} />
+        {/* Arms (behind body) */}
+        <G stroke={SPARK} strokeWidth={9} strokeLinecap="round">
+          <Path d={`M28,68 L8,${armEndY}`} />
+          <Path d={`M92,68 L112,${armEndY}`} />
+        </G>
+        <Circle cx="8" cy={armEndY} r="6" fill={SPARK} />
+        <Circle cx="112" cy={armEndY} r="6" fill={SPARK} />
 
-        {/* emblem stripe */}
-        <View style={[styles.stripe, { width: s * 0.5, height: s * 0.07, borderRadius: 4, top: s * 0.2 }]} />
-
-        {/* eyes */}
-        <View style={[styles.eyesRow, { top: s * 0.38, gap: s * 0.16 }]}>
-          <View style={[styles.eye, { width: eye, height: eye, borderRadius: eye / 2 }]}>
-            <View style={[styles.pupil, { width: pupil, height: pupil, borderRadius: pupil / 2 }]} />
-          </View>
-          <View style={[styles.eye, { width: eye, height: eye, borderRadius: eye / 2 }]}>
-            <View style={[styles.pupil, { width: pupil, height: pupil, borderRadius: pupil / 2 }]} />
-          </View>
-        </View>
-
-        {/* smile */}
-        <View
-          style={[
-            styles.smile,
-            {
-              width: s * 0.34,
-              height: s * 0.17,
-              borderBottomLeftRadius: s * 0.2,
-              borderBottomRightRadius: s * 0.2,
-              borderWidth: Math.max(2, s * 0.035),
-              bottom: s * 0.16,
-            },
-          ]}
+        {/* Spiky body */}
+        <Path
+          d={starburst(60, 54, 47, 29, 12)}
+          fill={SPARK}
+          stroke={SPARK_DARK}
+          strokeWidth={2}
+          strokeLinejoin="round"
         />
-      </View>
+        {/* subtle inner shading */}
+        <Circle cx="60" cy="58" r="30" fill={SPARK_SHADE} opacity={0.18} />
 
-      {/* Feet */}
-      <View style={[styles.feetRow, { gap: s * 0.12, bottom: 0 }]}>
-        <View style={[styles.foot, { width: s * 0.22, height: s * 0.12, borderRadius: s * 0.06 }]} />
-        <View style={[styles.foot, { width: s * 0.22, height: s * 0.12, borderRadius: s * 0.06 }]} />
-      </View>
+        {/* Eyebrows */}
+        <G stroke={SPARK_DARK} strokeWidth={3.5} strokeLinecap="round" fill="none">
+          <Path d="M37,36 Q47,31 56,36" />
+          <Path d="M64,36 Q73,31 83,36" />
+        </G>
+
+        {/* Eyes */}
+        <G>
+          <Ellipse cx="48" cy="50" rx="11" ry="13" fill="#FFFFFF" />
+          <Ellipse cx="72" cy="50" rx="11" ry="13" fill="#FFFFFF" />
+          <Circle cx="49" cy="51" r="6.5" fill="#2E6FB0" />
+          <Circle cx="71" cy="51" r="6.5" fill="#2E6FB0" />
+          <Circle cx="49" cy="51" r="3.4" fill={colors.navy} />
+          <Circle cx="71" cy="51" r="3.4" fill={colors.navy} />
+          <Circle cx="51" cy="48.5" r="1.6" fill="#FFFFFF" />
+          <Circle cx="73" cy="48.5" r="1.6" fill="#FFFFFF" />
+        </G>
+
+        {/* Big open grin */}
+        <G>
+          <Path d="M45,64 L75,64 Q75,82 60,82 Q45,82 45,64 Z" fill="#9E2B3E" stroke={SPARK_DARK} strokeWidth={1.5} />
+          <Rect x="47" y="64" width="26" height="5.5" rx="2.5" fill="#FFFFFF" />
+          <Ellipse cx="60" cy="78" rx="8.5" ry="4.5" fill="#E36B82" />
+        </G>
+      </Svg>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  body: {
-    backgroundColor: colors.primary,
-    borderWidth: 3,
-    borderColor: colors.navy,
-    alignItems: 'center',
-  },
-  gloss: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.25)' },
-  stripe: { position: 'absolute', backgroundColor: colors.navy, opacity: 0.18 },
-  arm: { position: 'absolute', backgroundColor: colors.primaryDark, borderRadius: 999, top: '34%' },
-  eyesRow: { position: 'absolute', flexDirection: 'row' },
-  eye: { backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  pupil: { backgroundColor: colors.navy },
-  smile: { position: 'absolute', borderColor: colors.navy, backgroundColor: 'transparent', borderTopWidth: 0 },
-  feetRow: { position: 'absolute', flexDirection: 'row' },
-  foot: { backgroundColor: colors.navy },
-});

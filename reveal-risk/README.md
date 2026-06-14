@@ -47,9 +47,9 @@ leaderboard, a domain-weakness heatmap, an at-risk roster, and campaign controls
 the buyer-facing surface (web-first; wired to server aggregates in Phase 3).
 
 ### Mascot
-"Vault," the emerald shield-buddy on the home and results screens, is drawn from primitives
-so it ships with no external asset host. An AI-illustrated version also exists — drop it in
-as `assets/mascot.png` and swap the `Mascot` component for an `<Image>`.
+"Spark," Reveal Risk's blue spiky starburst mascot, greets users on the home and results
+screens. It's drawn as vector paths (`react-native-svg`) so it ships with no external asset
+host.
 
 ### Dev controls (top bar)
 - **+1 day** — simulate returning tomorrow to watch the streak increment (or reset on a gap).
@@ -81,7 +81,7 @@ src/
   lib/supabase.ts               # Phase 3 backend seam (auto-detects env; offline otherwise)
   components/
     hud/Hud.tsx                 # streak · XP · shields HUD
-    brand/Mascot.tsx            # "Vault" mascot, drawn from primitives
+    brand/Mascot.tsx            # "Spark" mascot, drawn as SVG vector paths
     challenges/SpotThePhish.tsx # flagship interactive challenge
     challenges/BranchingScenario.tsx
     challenges/Mcq.tsx
