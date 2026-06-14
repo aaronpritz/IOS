@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { useGameStore, badgeMeta } from '../store/useGameStore';
 import { THREAT_DOMAINS } from '../data/domains';
+import { lessonsInDomain } from '../data/lessons';
 
 /** Stats, badges, and per-domain mastery — plus the per-user Human-Risk Score (B2B). */
 export function ProfileScreen() {
@@ -11,9 +12,10 @@ export function ProfileScreen() {
   const xp = useGameStore((s) => s.xp);
   const badges = useGameStore((s) => s.badges);
   const level = useGameStore((s) => s.level());
+  const completedLessons = useGameStore((s) => s.completedLessons);
 
   // Illustrative human-risk score: rises with engagement (lower = riskier).
-  const riskScore = Math.min(95, 40 + Math.floor(xp / 10) + streak * 2);
+  const riskScore = Math.min(95, 40 + Math.floor(xp / 10) + streak * 2 + completedLessons.length * 3);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, gap: 16 }}>
@@ -63,8 +65,10 @@ export function ProfileScreen() {
       {/* Domain mastery */}
       <Text style={styles.sectionTitle}>Threat domains</Text>
       <View style={{ gap: 8 }}>
-        {THREAT_DOMAINS.map((d, i) => {
-          const pct = i === 0 ? Math.min(100, 25 + streak * 8) : 0;
+        {THREAT_DOMAINS.map((d) => {
+          const ids = lessonsInDomain(d.key);
+          const doneInDomain = ids.filter((id) => completedLessons.includes(id)).length;
+          const pct = ids.length ? Math.round((doneInDomain / ids.length) * 100) : 0;
           return (
             <View key={d.key} style={styles.domainRow}>
               <Text style={{ fontSize: 20 }}>{d.icon}</Text>

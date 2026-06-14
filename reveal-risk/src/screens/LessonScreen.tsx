@@ -10,6 +10,7 @@ import { getLesson } from '../data/lessons';
 import { useGameStore } from '../store/useGameStore';
 
 export interface LessonSummary {
+  lessonId: string;
   xpEarned: number;
   correct: number;
   total: number;
@@ -52,6 +53,7 @@ export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
   function next() {
     if (index + 1 >= lesson.challenges.length) {
       onComplete({
+        lessonId,
         xpEarned,
         correct: correct,
         total: lesson.challenges.length,

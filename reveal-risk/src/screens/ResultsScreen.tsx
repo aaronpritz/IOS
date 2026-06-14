@@ -17,7 +17,9 @@ export function ResultsScreen({ summary, onDone }: Props) {
   // Commit the session exactly once (updates streak / XP / badges).
   const [outcome, setOutcome] = useState<SessionResult | null>(null);
   useEffect(() => {
-    setOutcome(useGameStore.getState().completeSession(summary.xpEarned));
+    const store = useGameStore.getState();
+    store.markLessonComplete(summary.lessonId);
+    setOutcome(store.completeSession(summary.xpEarned));
   }, []);
 
   if (!outcome) return null;

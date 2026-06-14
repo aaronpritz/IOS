@@ -63,6 +63,8 @@ interface GameState {
   xp: number;
   hearts: number;
   badges: string[];
+  /** Lesson ids the user has completed (drives path unlocks + domain mastery). */
+  completedLessons: string[];
   /** Dev toggle: simulate the passage of days to test streak logic. */
   dayOffset: number;
 
@@ -75,6 +77,7 @@ interface GameState {
   loseHeart: () => void;
   refillHearts: () => void;
   completeSession: (xpEarned: number) => SessionResult;
+  markLessonComplete: (lessonId: string) => void;
   advanceDay: () => void;
   resetProgress: () => void;
 }
@@ -88,6 +91,7 @@ export const useGameStore = create<GameState>()(
       xp: 0,
       hearts: MAX_HEARTS,
       badges: [],
+      completedLessons: [],
       dayOffset: 0,
 
       level: () => Math.floor(get().xp / XP_PER_LEVEL) + 1,
@@ -96,6 +100,13 @@ export const useGameStore = create<GameState>()(
 
       loseHeart: () => set((s) => ({ hearts: Math.max(0, s.hearts - 1) })),
       refillHearts: () => set({ hearts: MAX_HEARTS }),
+
+      markLessonComplete: (lessonId) =>
+        set((s) =>
+          s.completedLessons.includes(lessonId)
+            ? s
+            : { completedLessons: [...s.completedLessons, lessonId] }
+        ),
 
       completeSession: (xpEarned) => {
         const s = get();
@@ -151,6 +162,7 @@ export const useGameStore = create<GameState>()(
           xp: 0,
           hearts: MAX_HEARTS,
           badges: [],
+          completedLessons: [],
           dayOffset: 0,
         }),
     }),
@@ -164,6 +176,7 @@ export const useGameStore = create<GameState>()(
         xp: s.xp,
         hearts: s.hearts,
         badges: s.badges,
+        completedLessons: s.completedLessons,
         dayOffset: s.dayOffset,
       }),
     }

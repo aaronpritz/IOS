@@ -11,3 +11,27 @@ export const LESSONS: Record<string, Lesson> = {
 export function getLesson(id: string): Lesson {
   return LESSONS[id] ?? PHISHING_LESSON;
 }
+
+/** The ordered learning path on the home screen. `lessonId: null` = coming soon. */
+export interface JourneyNode {
+  id: string;
+  lessonId: string | null;
+  title: string;
+  icon: string;
+  domainKey: string;
+}
+
+export const PATH_NODES: JourneyNode[] = [
+  { id: 'n1', lessonId: PHISHING_LESSON.id, title: 'Spot the Phish', icon: '🎣', domainKey: 'phishing' },
+  { id: 'n2', lessonId: PASSWORDS_LESSON.id, title: 'Strong Passwords', icon: '🔑', domainKey: 'passwords' },
+  { id: 'n3', lessonId: null, title: 'Fake Login Pages', icon: '🪪', domainKey: 'phishing' },
+  { id: 'n4', lessonId: null, title: 'Deepfake Voices', icon: '🤖', domainKey: 'ai_deepfakes' },
+];
+
+/** Lessons that belong to each domain (for mastery %). */
+export function lessonsInDomain(domainKey: string): string[] {
+  return Object.values(LESSONS)
+    .filter((l) => l.domainKey === domainKey)
+    .map((l) => l.id);
+}
+
