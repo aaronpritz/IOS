@@ -35,7 +35,7 @@ export default function App() {
         {showChrome && (
           <View style={styles.appbar}>
             <Text style={styles.brand}>
-              <Text style={{ color: colors.primary }}>◆</Text> Reveal Risk
+              Cyber<Text style={{ color: colors.primary }}>Spark</Text>
             </Text>
             <View style={styles.devRow}>
               <ViewToggle view={view} onChange={setView} />
