@@ -8,6 +8,7 @@ import { ResultsScreen } from './src/screens/ResultsScreen';
 import { LeaguesScreen } from './src/screens/LeaguesScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ManagerDashboard } from './src/screens/ManagerDashboard';
+import { SplashScreen } from './src/screens/SplashScreen';
 import { useGameStore } from './src/store/useGameStore';
 
 type Tab = 'learn' | 'leagues' | 'profile';
@@ -19,6 +20,7 @@ export default function App() {
   const [flow, setFlow] = useState<Flow>('home');
   const [view, setView] = useState<ViewMode>('employee');
   const [summary, setSummary] = useState<LessonSummary | null>(null);
+  const [showSplash, setShowSplash] = useState(true);
 
   const advanceDay = useGameStore((s) => s.advanceDay);
   const resetProgress = useGameStore((s) => s.resetProgress);
@@ -80,6 +82,8 @@ export default function App() {
             <TabBtn icon="🧑‍💻" label="Profile" active={tab === 'profile'} onPress={() => setTab('profile')} />
           </View>
         )}
+
+        {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
       </View>
     </View>
   );
