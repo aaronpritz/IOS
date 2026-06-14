@@ -4,6 +4,7 @@ import { colors, radius, font } from '../theme/tokens';
 import { Button } from '../components/ui/Button';
 import { SpotThePhish } from '../components/challenges/SpotThePhish';
 import { Mcq } from '../components/challenges/Mcq';
+import { BranchingScenario } from '../components/challenges/BranchingScenario';
 import { PHISHING_LESSON } from '../data/phishingLesson';
 import { useGameStore } from '../store/useGameStore';
 
@@ -98,6 +99,10 @@ export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
         {challenge.type === 'mcq' && challenge.payload.type === 'mcq' && (
           <Mcq payload={challenge.payload} onResult={handleResult} />
         )}
+        {challenge.type === 'branching_scenario' &&
+          challenge.payload.type === 'branching_scenario' && (
+            <BranchingScenario payload={challenge.payload} onResult={handleResult} />
+          )}
       </View>
 
       {/* Feedback footer */}

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { Button } from '../components/ui/Button';
 import { MysteryBox } from '../components/rewards/MysteryBox';
+import { Mascot } from '../components/brand/Mascot';
 import { useGameStore, SessionResult, badgeMeta } from '../store/useGameStore';
 import { LessonSummary } from './LessonScreen';
 
@@ -29,6 +30,7 @@ export function ResultsScreen({ summary, onDone }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
+        <Mascot size={84} mood="cheer" />
         <Text style={styles.flame}>🔥</Text>
         <Text style={styles.streakNum}>{outcome.streak}</Text>
         <Text style={styles.streakLabel}>

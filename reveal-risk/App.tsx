@@ -7,14 +7,17 @@ import { LessonScreen, LessonSummary } from './src/screens/LessonScreen';
 import { ResultsScreen } from './src/screens/ResultsScreen';
 import { LeaguesScreen } from './src/screens/LeaguesScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { ManagerDashboard } from './src/screens/ManagerDashboard';
 import { useGameStore } from './src/store/useGameStore';
 
 type Tab = 'learn' | 'leagues' | 'profile';
 type Flow = 'home' | 'lesson' | 'results';
+type ViewMode = 'employee' | 'manager';
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('learn');
   const [flow, setFlow] = useState<Flow>('home');
+  const [view, setView] = useState<ViewMode>('employee');
   const [summary, setSummary] = useState<LessonSummary | null>(null);
 
   const advanceDay = useGameStore((s) => s.advanceDay);
@@ -22,46 +25,55 @@ export default function App() {
   const dayOffset = useGameStore((s) => s.dayOffset);
 
   const fullScreen = flow === 'lesson' || flow === 'results';
+  const isManager = view === 'manager';
+  const showChrome = !fullScreen; // app bar always shown except mid-lesson
 
   return (
     <View style={styles.app}>
       <StatusBar style="dark" />
-      <View style={styles.phone}>
-        {!fullScreen && (
+      <View style={[styles.phone, isManager && styles.phoneWide]}>
+        {showChrome && (
           <View style={styles.appbar}>
             <Text style={styles.brand}>
               <Text style={{ color: colors.primary }}>◆</Text> Reveal Risk
             </Text>
             <View style={styles.devRow}>
-              <DevBtn label={`+1 day (${dayOffset})`} onPress={advanceDay} />
-              <DevBtn label="reset" onPress={resetProgress} />
+              <ViewToggle view={view} onChange={setView} />
+              {!isManager && <DevBtn label={`+1 day (${dayOffset})`} onPress={advanceDay} />}
+              {!isManager && <DevBtn label="reset" onPress={resetProgress} />}
             </View>
           </View>
         )}
 
         <View style={{ flex: 1 }}>
-          {flow === 'home' && tab === 'learn' && (
-            <PathScreen onStartLesson={() => setFlow('lesson')} />
-          )}
-          {flow === 'home' && tab === 'leagues' && <LeaguesScreen />}
-          {flow === 'home' && tab === 'profile' && <ProfileScreen />}
+          {isManager ? (
+            <ManagerDashboard />
+          ) : (
+            <>
+              {flow === 'home' && tab === 'learn' && (
+                <PathScreen onStartLesson={() => setFlow('lesson')} />
+              )}
+              {flow === 'home' && tab === 'leagues' && <LeaguesScreen />}
+              {flow === 'home' && tab === 'profile' && <ProfileScreen />}
 
-          {flow === 'lesson' && (
-            <LessonScreen
-              lessonId="lesson_phish_01"
-              onExit={() => setFlow('home')}
-              onComplete={(s) => {
-                setSummary(s);
-                setFlow('results');
-              }}
-            />
-          )}
-          {flow === 'results' && summary && (
-            <ResultsScreen summary={summary} onDone={() => setFlow('home')} />
+              {flow === 'lesson' && (
+                <LessonScreen
+                  lessonId="lesson_phish_01"
+                  onExit={() => setFlow('home')}
+                  onComplete={(s) => {
+                    setSummary(s);
+                    setFlow('results');
+                  }}
+                />
+              )}
+              {flow === 'results' && summary && (
+                <ResultsScreen summary={summary} onDone={() => setFlow('home')} />
+              )}
+            </>
           )}
         </View>
 
-        {!fullScreen && (
+        {showChrome && !isManager && (
           <View style={styles.tabbar}>
             <TabBtn icon="📚" label="Learn" active={tab === 'learn'} onPress={() => setTab('learn')} />
             <TabBtn icon="🏆" label="Leagues" active={tab === 'leagues'} onPress={() => setTab('leagues')} />
@@ -69,6 +81,24 @@ export default function App() {
           </View>
         )}
       </View>
+    </View>
+  );
+}
+
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
+  return (
+    <View style={styles.viewToggle}>
+      {(['employee', 'manager'] as const).map((v) => (
+        <Pressable
+          key={v}
+          onPress={() => onChange(v)}
+          style={[styles.viewBtn, view === v && styles.viewBtnActive]}
+        >
+          <Text style={[styles.viewBtnText, view === v && styles.viewBtnTextActive]}>
+            {v === 'employee' ? '🧑‍💻' : '📊'}
+          </Text>
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -109,6 +139,13 @@ const styles = StyleSheet.create({
     },
     default: { flex: 1, width: '100%', backgroundColor: colors.bg, paddingTop: 44 },
   }) as any,
+  // The manager dashboard is web-first, so widen the frame when in manager view.
+  phoneWide: Platform.OS === 'web' ? ({ maxWidth: 720 } as any) : {},
+  viewToggle: { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: radius.pill, padding: 2 },
+  viewBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
+  viewBtnActive: { backgroundColor: colors.navy },
+  viewBtnText: { fontSize: 14 },
+  viewBtnTextActive: {},
   appbar: {
     flexDirection: 'row',
     alignItems: 'center',

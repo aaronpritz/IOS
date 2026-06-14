@@ -50,7 +50,39 @@ export interface McqPayload {
   correctOptionId: string;
 }
 
-export type ChallengePayload = SpotThePhishPayload | McqPayload;
+/** One choice the user can make at a scenario node. */
+export interface ScenarioChoice {
+  id: string;
+  text: string;
+  /** Id of the next node, or 'END' to finish. */
+  next: string;
+  /** True if this is the security-correct choice. */
+  isSafe: boolean;
+  /** Inline coaching shown after the choice. */
+  feedback: string;
+}
+
+/** A single step in a branching social-engineering scenario. */
+export interface ScenarioNode {
+  id: string;
+  /** Who is "speaking" (e.g. "Caller", "Text message", "Narrator"). */
+  speaker: string;
+  /** The situation / message presented to the user. */
+  text: string;
+  /** Empty choices = terminal node. */
+  choices: ScenarioChoice[];
+  /** For terminal nodes: did the user end up safe or compromised? */
+  outcome?: 'safe' | 'compromised';
+}
+
+export interface BranchingScenarioPayload {
+  type: 'branching_scenario';
+  prompt: string;
+  startNodeId: string;
+  nodes: ScenarioNode[];
+}
+
+export type ChallengePayload = SpotThePhishPayload | McqPayload | BranchingScenarioPayload;
 
 export interface Challenge {
   id: string;

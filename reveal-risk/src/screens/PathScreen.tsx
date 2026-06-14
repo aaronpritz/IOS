@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { Hud } from '../components/hud/Hud';
+import { Mascot } from '../components/brand/Mascot';
 import { Button } from '../components/ui/Button';
 import { PHISHING_PATH, PHISHING_LESSON } from '../data/phishingLesson';
 import { THREAT_DOMAINS } from '../data/domains';
@@ -28,6 +29,18 @@ export function PathScreen({ onStartLesson }: Props) {
       <Hud />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 28 }}>
+        {/* Mascot greeting */}
+        <View style={styles.greet}>
+          <Mascot size={68} />
+          <View style={styles.speech}>
+            <Text style={styles.speechText}>
+              {doneToday
+                ? 'Nice work today — your streak is safe! 🔥'
+                : 'Spot the red flags today to keep your streak alive!'}
+            </Text>
+          </View>
+        </View>
+
         {/* Domain header */}
         <View style={[styles.domainHeader, { backgroundColor: domain.color }]}>
           <Text style={styles.domainIcon}>{domain.icon}</Text>
@@ -90,6 +103,16 @@ export function PathScreen({ onStartLesson }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  greet: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingTop: 10 },
+  speech: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    padding: 12,
+  },
+  speechText: { fontSize: font.small, fontWeight: '700', color: colors.text, lineHeight: 19 },
   domainHeader: {
     flexDirection: 'row',
     alignItems: 'center',

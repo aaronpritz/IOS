@@ -80,6 +80,77 @@ export const PHISHING_LESSON: Lesson = {
       },
     },
     {
+      id: 'ch_phish_scenario',
+      domainKey: 'social_eng',
+      type: 'branching_scenario',
+      xp: 20,
+      explanation:
+        'Vishing (voice phishing) relies on urgency and authority. The secure move is always: never share codes or passwords, and verify the caller through an official channel you initiate.',
+      payload: {
+        type: 'branching_scenario',
+        prompt: 'Play it out — make the secure choice at each step.',
+        startNodeId: 's1',
+        nodes: [
+          {
+            id: 's1',
+            speaker: '📞 Incoming call — "IT Help Desk"',
+            text: 'Hi, this is Alex from IT Support. We’re seeing suspicious logins on your account and need to secure it right now. Can you confirm the 6-digit code we just texted you?',
+            choices: [
+              {
+                id: 'a',
+                text: 'Read them the code so they can fix it fast',
+                next: 'bad1',
+                isSafe: false,
+                feedback: 'Never share an MFA code — that code is the second factor an attacker needs to take over your account.',
+              },
+              {
+                id: 'b',
+                text: 'Decline and say you’ll call IT back on the official number',
+                next: 's2',
+                isSafe: true,
+                feedback: 'Right — verify through a channel you initiate, not one the caller gave you.',
+              },
+            ],
+          },
+          {
+            id: 'bad1',
+            speaker: 'Narrator',
+            text: 'Within seconds, the attacker uses your code to log in and resets your password. They now control your account.',
+            choices: [],
+            outcome: 'compromised',
+          },
+          {
+            id: 's2',
+            speaker: '📞 Caller (more insistent)',
+            text: 'There’s no time for that — your account will be locked in 2 minutes and you’ll lose access to payroll. Just confirm the code and we’re done.',
+            choices: [
+              {
+                id: 'a',
+                text: 'The urgency worries you — give in and share the code',
+                next: 'bad1',
+                isSafe: false,
+                feedback: 'Manufactured urgency is the pressure tactic. Real IT won’t rush you into revealing a code.',
+              },
+              {
+                id: 'b',
+                text: 'Hang up and report the call to security',
+                next: 'good1',
+                isSafe: true,
+                feedback: 'Exactly. Hang up, then report — that alert helps protect everyone.',
+              },
+            ],
+          },
+          {
+            id: 'good1',
+            speaker: 'Narrator',
+            text: 'You hang up and report the call. Security confirms it was an attacker and warns the company. Your account stays safe.',
+            choices: [],
+            outcome: 'safe',
+          },
+        ],
+      },
+    },
+    {
       id: 'ch_phish_mcq1',
       domainKey: 'phishing',
       type: 'mcq',
