@@ -1,4 +1,4 @@
-# Reveal Risk Cyber App — Technical Build Plan
+# CyberSpark — Technical Build Plan (by Reveal Risk)
 
 Companion to `BLUEPRINT.md`. This is the engineering architecture, data model, screen map,
 and phased roadmap.
@@ -40,7 +40,7 @@ Chosen over Flutter for decisive, environment-grounded reasons:
   a weekly cron promotes/demotes.
 - **Analytics + experimentation:** **PostHog** — events, funnels, cohorts, feature flags
   **and** A/B experiments in one self-hostable tool (the closest single-tool analog to
-  Duolingo's internal experimentation engine).
+  a best-in-class internal experimentation engine).
 - **Trusted logic:** Deno edge functions for **server-authoritative** XP/streak validation,
   league rollover, Human-Risk Score computation, anti-cheat.
 - **Content:** authored as **versioned JSON** in Postgres + CDN for media — data-driven so
@@ -141,7 +141,7 @@ team); **Human-Risk Score** job; **manager dashboard** (web); PostHog events. *T
 actual B2B value.*
 
 **Phase 4 — Scale + experimentation.** PostHog feature-flag **A/B engine** on notification
-copy, lesson order, reward cadence, difficulty (Duolingo's edge); consultant content-
+copy, lesson order, reward cadence, difficulty (the engagement-engine edge); consultant content-
 authoring tools (versioned variants); adaptive difficulty + spaced-repetition review;
 seasons/cross-domain leaderboards; SCIM/SIEM/Slack-Teams integrations; native + web push at
 scale; accessibility hardening.

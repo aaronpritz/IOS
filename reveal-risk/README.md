@@ -1,6 +1,6 @@
 # CyberSpark — by Reveal Risk
 
-A runnable prototype of **CyberSpark**, the **"Duolingo for cybersecurity"** daily-streak loop.
+A runnable prototype of **CyberSpark**, a habit-forming, daily-streak cybersecurity trainer.
 Cross-platform (Expo / React Native + react-native-web) so it runs on iOS, Android, **and
 the browser** — which is how you demo it here (no Xcode/Mac required).
 

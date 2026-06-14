@@ -12,7 +12,7 @@ interface Props {
   style?: ViewStyle;
 }
 
-/** Chunky, tactile button with a Duolingo-style 3D bottom edge. */
+/** Chunky, tactile button with a playful 3D bottom edge. */
 export function Button({ label, onPress, variant = 'primary', disabled, style }: Props) {
   const tint = TINTS[variant];
   return (

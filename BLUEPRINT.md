@@ -1,19 +1,19 @@
-# Reveal Risk — "Duolingo for Cybersecurity"
-## Product Strategy Blueprint
+# CyberSpark — Habit-Forming Cybersecurity Training
+## Product Strategy Blueprint (by Reveal Risk)
 
 > *"Organizations have spent two decades treating human risk as a training problem."*
 > — Reveal Risk
 >
 > That sentence is the whole thesis. Annual compliance modules and once-a-year phishing
-> tests don't change behavior. **Habits change behavior.** Duolingo proved you can build a
-> durable daily habit around a "boring" subject by wrapping it in behavioral psychology.
-> This is the plan to do the same for cybersecurity.
+> tests don't change behavior. **Habits change behavior.** The world's most engaging
+> consumer apps prove you can build a durable daily habit around a "boring" subject by
+> wrapping it in behavioral psychology. CyberSpark does the same for cybersecurity.
 
 ---
 
 ## 1. Why this works (the strategic wedge)
 
-| | Legacy security training | Duolingo's model | This app |
+| | Legacy security training | Habit-app model | CyberSpark |
 |---|---|---|---|
 | Cadence | Annual / quarterly | **Daily, ≤3 min** | Daily "cyber rep" |
 | Driver | Compliance mandate | Intrinsic + habit loops | Habit loops + culture |
@@ -28,13 +28,13 @@ own, backed by real vCISO content credibility.
 
 ---
 
-## 2. What actually makes Duolingo addictive
+## 2. What actually makes habit-forming apps addictive
 
 Research-validated mechanics (sources at the end), ranked by impact:
 
 1. **Streaks + loss aversion** — the single most powerful lever. 7-day streakers are
    **3.6× more likely** to stay long-term; the **streak-freeze** safety net cut churn
-   **~21%** for at-risk users. Duolingo ran **600+ experiments on streaks alone**.
+   **~21%** for at-risk users. Category leaders run **600+ experiments on streaks alone**.
 2. **Leagues + social comparison** — weekly Bronze→Diamond tiers with promotion/demotion
    turn solo practice into a competitive return-visit driver.
 3. **XP, levels & a visible path** — constant sense of progress and mastery.
@@ -42,21 +42,21 @@ Research-validated mechanics (sources at the end), ranked by impact:
    reward → investment, looped daily. Surprise chests, bonus gems, "lucky" multipliers.
 5. **Hearts / gems economy** — soft scarcity creates stakes; currency is earnable or
    buyable, fueling both engagement and monetization.
-6. **Perfectly-timed notifications** — the guilt-trip mascot, fired in the user's own
+6. **Perfectly-timed notifications** — a friendly mascot nudge, fired in the user's own
    historical engagement window.
 7. **Bite-sized lessons** — 2–5 minutes, ultra-low friction, "just one more."
 8. **Daily quests & goals** — fresh, achievable objectives every day.
 9. **Personalization at scale** — **500+ simultaneous A/B tests**; effectively no two users
    use the same app.
 
-The meta-lesson: Duolingo isn't winning on content quality — it's winning on a
+The meta-lesson: the category winners aren't winning on content quality — they win on a
 relentlessly-experimented **engagement engine**. The engine is the moat.
 
 ---
 
 ## 3. Mechanic → cybersecurity mapping
 
-| Duolingo mechanic | Cyber-training equivalent |
+| Proven habit mechanic | Cyber-training equivalent |
 |---|---|
 | Daily streak | Daily 2-minute **"cyber rep"** (spot-the-phish, password check, scenario) |
 | Leagues / leaderboards | **Team & department leagues** — perfect for B2B culture and friendly rivalry |
@@ -66,7 +66,7 @@ relentlessly-experimented **engagement engine**. The engine is the moat.
 | Notifications | **Behavioral nudges** tied to real risk moments and the user's window |
 | Bite-size lessons | Interactive **phishing-inbox** sims, spot-the-red-flag, branching scenarios |
 | Daily quests | **"Today's threat"** challenges tied to live scams / current CVEs |
-| Mascot (Duo) | A guardian + a recurring "threat actor" antagonist character |
+| Mascot | **Spark** (guardian) + a recurring "threat actor" antagonist character |
 | Real-world transfer | Live phishing-simulation results **feed back into the app** (Hoxhunt-style) |
 
 ---
@@ -138,9 +138,11 @@ existing motion:
 
 ## Sources
 
-- StriveCloud — *Duolingo gamification explained* — https://www.strivecloud.io/blog/gamification-examples-boost-user-retention-duolingo
-- Lenny's Newsletter — *How Duolingo reignited user growth* (Jorge Mazal) — https://www.lennysnewsletter.com/p/how-duolingo-reignited-user-growth
-- "Behind the product: Duolingo streaks" (Jackson Shuttleworth, Retention Team) — https://share.snipd.com/episode/b1613fc8-9c13-4e1b-801e-521bc7ead218
-- Orizon — *Duolingo's Gamification Secrets* — https://www.orizon.co/blog/duolingos-gamification-secrets
+Industry analyses of habit-forming product mechanics and gamified security training:
+
+- StriveCloud — gamification & user-retention teardown — https://www.strivecloud.io/blog/gamification-examples-boost-user-retention-duolingo
+- Lenny's Newsletter — how a leading habit app reignited user growth (Jorge Mazal) — https://www.lennysnewsletter.com/p/how-duolingo-reignited-user-growth
+- Behind the Product — streak-system design (Retention Team, Jackson Shuttleworth) — https://share.snipd.com/episode/b1613fc8-9c13-4e1b-801e-521bc7ead218
+- Orizon — gamification secrets: streaks & XP — https://www.orizon.co/blog/duolingos-gamification-secrets
 - Hoxhunt — adaptive gamified phishing micro-training — https://hoxhunt.com/blog/knowbe4-competitors
 - Reveal Risk — About / human-risk positioning — https://revealrisk.com/about-us

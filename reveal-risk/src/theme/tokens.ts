@@ -1,6 +1,6 @@
 /**
  * Reveal Risk design tokens.
- * Light, friendly, consumer-grade feel (Duolingo-inspired) with a security-pro accent.
+ * Light, friendly, consumer-grade feel with a security-pro accent.
  */
 export const colors = {
   bg: '#F4F7FB',
