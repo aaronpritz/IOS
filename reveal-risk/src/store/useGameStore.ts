@@ -65,6 +65,11 @@ interface GameState {
   badges: string[];
   /** Lesson ids the user has completed (drives path unlocks + domain mastery). */
   completedLessons: string[];
+  /** First-run onboarding completed + the chosen preferences. */
+  onboarded: boolean;
+  focusDomain: string | null;
+  dailyGoal: number;
+  reminderTime: string | null;
   /** Dev toggle: simulate the passage of days to test streak logic. */
   dayOffset: number;
 
@@ -78,6 +83,7 @@ interface GameState {
   refillHearts: () => void;
   completeSession: (xpEarned: number) => SessionResult;
   markLessonComplete: (lessonId: string) => void;
+  completeOnboarding: (prefs: { focusDomain: string; dailyGoal: number; reminderTime: string }) => void;
   advanceDay: () => void;
   resetProgress: () => void;
 }
@@ -92,6 +98,10 @@ export const useGameStore = create<GameState>()(
       hearts: MAX_HEARTS,
       badges: [],
       completedLessons: [],
+      onboarded: false,
+      focusDomain: null,
+      dailyGoal: 1,
+      reminderTime: null,
       dayOffset: 0,
 
       level: () => Math.floor(get().xp / XP_PER_LEVEL) + 1,
@@ -107,6 +117,14 @@ export const useGameStore = create<GameState>()(
             ? s
             : { completedLessons: [...s.completedLessons, lessonId] }
         ),
+
+      completeOnboarding: (prefs) =>
+        set({
+          onboarded: true,
+          focusDomain: prefs.focusDomain,
+          dailyGoal: prefs.dailyGoal,
+          reminderTime: prefs.reminderTime,
+        }),
 
       completeSession: (xpEarned) => {
         const s = get();
@@ -163,6 +181,10 @@ export const useGameStore = create<GameState>()(
           hearts: MAX_HEARTS,
           badges: [],
           completedLessons: [],
+          onboarded: false,
+          focusDomain: null,
+          dailyGoal: 1,
+          reminderTime: null,
           dayOffset: 0,
         }),
     }),
@@ -177,6 +199,10 @@ export const useGameStore = create<GameState>()(
         hearts: s.hearts,
         badges: s.badges,
         completedLessons: s.completedLessons,
+        onboarded: s.onboarded,
+        focusDomain: s.focusDomain,
+        dailyGoal: s.dailyGoal,
+        reminderTime: s.reminderTime,
         dayOffset: s.dayOffset,
       }),
     }

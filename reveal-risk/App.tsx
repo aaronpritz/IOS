@@ -9,6 +9,7 @@ import { LeaguesScreen } from './src/screens/LeaguesScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ManagerDashboard } from './src/screens/ManagerDashboard';
 import { SplashScreen } from './src/screens/SplashScreen';
+import { Onboarding } from './src/screens/Onboarding';
 import { useGameStore } from './src/store/useGameStore';
 
 type Tab = 'learn' | 'leagues' | 'profile';
@@ -31,6 +32,7 @@ export default function App() {
   const advanceDay = useGameStore((s) => s.advanceDay);
   const resetProgress = useGameStore((s) => s.resetProgress);
   const dayOffset = useGameStore((s) => s.dayOffset);
+  const onboarded = useGameStore((s) => s.onboarded);
 
   const fullScreen = flow === 'lesson' || flow === 'results';
   const isManager = view === 'manager';
@@ -40,56 +42,62 @@ export default function App() {
     <View style={styles.app}>
       <StatusBar style="dark" />
       <View style={[styles.phone, isManager && styles.phoneWide]}>
-        {showChrome && (
-          <View style={styles.appbar}>
-            <Text style={styles.brand}>
-              Cyber<Text style={{ color: colors.primary }}>Spark</Text>
-            </Text>
-            <View style={styles.devRow}>
-              <ViewToggle view={view} onChange={setView} />
-              {!isManager && <DevBtn label={`+1 day (${dayOffset})`} onPress={advanceDay} />}
-              {!isManager && <DevBtn label="reset" onPress={resetProgress} />}
+        {showSplash ? (
+          <SplashScreen onDone={() => setShowSplash(false)} />
+        ) : !onboarded ? (
+          <Onboarding onDone={() => setFlow('home')} />
+        ) : (
+          <>
+            {showChrome && (
+              <View style={styles.appbar}>
+                <Text style={styles.brand}>
+                  Cyber<Text style={{ color: colors.primary }}>Spark</Text>
+                </Text>
+                <View style={styles.devRow}>
+                  <ViewToggle view={view} onChange={setView} />
+                  {!isManager && <DevBtn label={`+1 day (${dayOffset})`} onPress={advanceDay} />}
+                  {!isManager && <DevBtn label="reset" onPress={resetProgress} />}
+                </View>
+              </View>
+            )}
+
+            <View style={{ flex: 1 }}>
+              {isManager ? (
+                <ManagerDashboard />
+              ) : (
+                <>
+                  {flow === 'home' && tab === 'learn' && (
+                    <PathScreen onStartLesson={startLesson} />
+                  )}
+                  {flow === 'home' && tab === 'leagues' && <LeaguesScreen />}
+                  {flow === 'home' && tab === 'profile' && <ProfileScreen />}
+
+                  {flow === 'lesson' && (
+                    <LessonScreen
+                      lessonId={activeLesson}
+                      onExit={() => setFlow('home')}
+                      onComplete={(s) => {
+                        setSummary(s);
+                        setFlow('results');
+                      }}
+                    />
+                  )}
+                  {flow === 'results' && summary && (
+                    <ResultsScreen summary={summary} onDone={() => setFlow('home')} />
+                  )}
+                </>
+              )}
             </View>
-          </View>
+
+            {showChrome && !isManager && (
+              <View style={styles.tabbar}>
+                <TabBtn icon="📚" label="Learn" active={tab === 'learn'} onPress={() => setTab('learn')} />
+                <TabBtn icon="🏆" label="Leagues" active={tab === 'leagues'} onPress={() => setTab('leagues')} />
+                <TabBtn icon="🧑‍💻" label="Profile" active={tab === 'profile'} onPress={() => setTab('profile')} />
+              </View>
+            )}
+          </>
         )}
-
-        <View style={{ flex: 1 }}>
-          {isManager ? (
-            <ManagerDashboard />
-          ) : (
-            <>
-              {flow === 'home' && tab === 'learn' && (
-                <PathScreen onStartLesson={startLesson} />
-              )}
-              {flow === 'home' && tab === 'leagues' && <LeaguesScreen />}
-              {flow === 'home' && tab === 'profile' && <ProfileScreen />}
-
-              {flow === 'lesson' && (
-                <LessonScreen
-                  lessonId={activeLesson}
-                  onExit={() => setFlow('home')}
-                  onComplete={(s) => {
-                    setSummary(s);
-                    setFlow('results');
-                  }}
-                />
-              )}
-              {flow === 'results' && summary && (
-                <ResultsScreen summary={summary} onDone={() => setFlow('home')} />
-              )}
-            </>
-          )}
-        </View>
-
-        {showChrome && !isManager && (
-          <View style={styles.tabbar}>
-            <TabBtn icon="📚" label="Learn" active={tab === 'learn'} onPress={() => setTab('learn')} />
-            <TabBtn icon="🏆" label="Leagues" active={tab === 'leagues'} onPress={() => setTab('leagues')} />
-            <TabBtn icon="🧑‍💻" label="Profile" active={tab === 'profile'} onPress={() => setTab('profile')} />
-          </View>
-        )}
-
-        {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
       </View>
     </View>
   );
