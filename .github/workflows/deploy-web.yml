@@ -36,6 +36,9 @@ jobs:
       - name: Export web bundle
         run: npx expo export --platform web
       - uses: actions/configure-pages@v5
+        with:
+          # Enable Pages (with the GitHub Actions source) via API if not already on.
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: reveal-risk/dist
