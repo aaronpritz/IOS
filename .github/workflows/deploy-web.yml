@@ -35,6 +35,10 @@ jobs:
       - run: npm ci
       - name: Export web bundle
         run: npx expo export --platform web
+      - name: Inject service-worker kill-switch
+        run: node scripts/inject-killswitch.js
+      - name: SPA 404 fallback
+        run: cp dist/index.html dist/404.html
       - uses: actions/configure-pages@v5
         with:
           # Enable Pages (with the GitHub Actions source) via API if not already on.
