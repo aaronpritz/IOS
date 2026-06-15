@@ -1,0 +1,58 @@
+name: Deploy CyberSpark Web
+
+# Builds the Expo web app and publishes it to GitHub Pages so the prototype
+# is testable at https://aaronpritz.github.io/IOS/ .
+#
+# One-time setup (repo Settings → Pages): set Source to "GitHub Actions".
+
+on:
+  push:
+    branches:
+      - claude/duolingo-cybersecurity-app-ll0u76
+      - claude/ios-app-types-guide-dVpFw
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: reveal-risk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Export web bundle
+        run: npx expo export --platform web
+      - name: Inject service-worker kill-switch
+        run: node scripts/inject-killswitch.js
+      - name: SPA 404 fallback
+        run: cp dist/index.html dist/404.html
+      - uses: actions/configure-pages@v5
+        with:
+          # Enable Pages (with the GitHub Actions source) via API if not already on.
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: reveal-risk/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
