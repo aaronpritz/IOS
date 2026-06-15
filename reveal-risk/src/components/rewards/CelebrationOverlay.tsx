@@ -58,9 +58,11 @@ export function CelebrationOverlay({ title, subtitle, onDone }: Props) {
 
   useEffect(() => {
     feedbackCelebrate();
+    // JS driver so opacity reliably reaches 1 on react-native-web (native-driven
+    // opacity can stay stuck at 0 / invisible there).
     Animated.parallel([
-      Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: false }),
+      Animated.spring(scale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: false }),
     ]).start();
   }, [fade, scale]);
 

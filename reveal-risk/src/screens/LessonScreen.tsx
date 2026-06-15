@@ -142,17 +142,19 @@ function FeedbackFooter({
   isLast: boolean;
   onNext: () => void;
 }) {
+  // JS-driven (useNativeDriver:false) + opacity kept at 1 so the footer is always
+  // visible/tappable even if the animation no-ops — never gate visibility on it.
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.spring(anim, { toValue: 1, friction: 8, tension: 70, useNativeDriver: true }).start();
+    Animated.spring(anim, { toValue: 1, friction: 8, tension: 70, useNativeDriver: false }).start();
   }, [anim]);
-  const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [60, 0] });
+  const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
 
   return (
     <Animated.View
       style={[
         styles.footer,
-        { backgroundColor: isCorrect ? '#E6F7F0' : '#FDECEE', opacity: anim, transform: [{ translateY }] },
+        { backgroundColor: isCorrect ? '#E6F7F0' : '#FDECEE', transform: [{ translateY }] },
       ]}
     >
       <Text style={[styles.footerTitle, { color: isCorrect ? colors.primaryDark : colors.danger }]}>
