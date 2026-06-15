@@ -3,43 +3,60 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { useGameStore } from '../store/useGameStore';
 
-/**
- * Static mock of the weekly league (B2B differentiator: Individual ↔ Team toggle).
- * Wired to real leaderboards in Phase 3.
- */
+/** Bot opponents for the weekly individual league (the user slots in by real XP). */
+const BOTS = [
+  { name: 'Priya N.', xp: 420 },
+  { name: 'Marcus T.', xp: 310 },
+  { name: 'Dana K.', xp: 250 },
+  { name: 'Sam R.', xp: 190 },
+  { name: 'Lena O.', xp: 140 },
+  { name: 'Owen B.', xp: 95 },
+  { name: 'Tariq F.', xp: 55 },
+  { name: 'Mia C.', xp: 25 },
+];
+
+const TEAMS = [
+  { name: 'Finance', xp: 2310 },
+  { name: 'Engineering', xp: 1980 },
+  { name: 'Sales', xp: 1750 },
+  { name: 'Operations', xp: 1240 },
+];
+
+const PROMOTE = 3; // top 3 advance
+const RELEGATE = 3; // bottom 3 drop
+
+/** Weekly competitive league driven by the user's real weekly XP. */
 export function LeaguesScreen() {
   const [mode, setMode] = useState<'individual' | 'team'>('individual');
-  const myXp = useGameStore((s) => s.xp);
+  const weeklyXp = useGameStore((s) => s.weeklyXp);
+  const tier = useGameStore((s) => s.leagueTier);
+  const dayOffset = useGameStore((s) => s.dayOffset);
 
-  const individuals = [
-    { name: 'Priya (Finance)', xp: 540 },
-    { name: 'Marcus (Sales)', xp: 410 },
-    { name: 'You', xp: myXp, me: true },
-    { name: 'Dana (Ops)', xp: 120 },
-    { name: 'Sam (IT)', xp: 80 },
-  ].sort((a, b) => b.xp - a.xp);
+  // Days left in the Mon–Sun league week.
+  const d = new Date();
+  d.setDate(d.getDate() + dayOffset);
+  const dow = (d.getDay() + 6) % 7; // Mon=0 … Sun=6
+  const daysLeft = 6 - dow;
+  const endsLabel = daysLeft <= 0 ? 'Ends today' : `Ends in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`;
 
-  const teams = [
-    { name: 'Finance', xp: 2310 },
-    { name: 'Engineering', xp: 1980 },
-    { name: 'Sales', xp: 1750 },
-    { name: 'Operations', xp: 1240 },
-  ].sort((a, b) => b.xp - a.xp);
+  const individuals = [...BOTS.map((b) => ({ ...b, me: false })), { name: 'You', xp: weeklyXp, me: true }].sort(
+    (a, b) => b.xp - a.xp
+  );
+  const teams = [...TEAMS].sort((a, b) => b.xp - a.xp);
+  const rows = mode === 'individual' ? individuals : teams;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>🏆 Diamond League</Text>
-        <Text style={styles.sub}>Ends in 3 days · top 3 advance</Text>
+        <Text style={styles.title}>🏆 {tier} League</Text>
+        <Text style={styles.sub}>
+          {endsLabel} · top {PROMOTE} advance, bottom {RELEGATE} drop
+        </Text>
       </View>
 
       <View style={styles.toggle}>
         {(['individual', 'team'] as const).map((m) => (
-          <Pressable
-            key={m}
-            onPress={() => setMode(m)}
-            style={[styles.toggleBtn, mode === m && styles.toggleActive]}
-          >
+          <Pressable key={m} onPress={() => setMode(m)} style={[styles.toggleBtn, mode === m && styles.toggleActive]}>
             <Text style={[styles.toggleText, mode === m && styles.toggleTextActive]}>
               {m === 'individual' ? 'Individual' : 'Teams'}
             </Text>
@@ -47,23 +64,49 @@ export function LeaguesScreen() {
         ))}
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 8 }}>
-        {(mode === 'individual' ? individuals : teams).map((row, i) => (
-          <View
-            key={row.name}
-            style={[styles.row, (row as any).me && styles.rowMe, i < 3 && styles.rowTop]}
-          >
-            <Text style={styles.rank}>{i + 1}</Text>
-            <Text style={[styles.name, (row as any).me && { fontWeight: '900' }]}>{row.name}</Text>
-            <Text style={styles.xp}>{row.xp} XP</Text>
-            {i < 3 && <Text style={styles.medal}>{['🥇', '🥈', '🥉'][i]}</Text>}
-          </View>
-        ))}
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 6 }}>
+        {rows.map((row, i) => {
+          const rank = i + 1;
+          const promote = rank <= PROMOTE;
+          const relegate = rank > rows.length - RELEGATE;
+          const me = (row as any).me;
+          return (
+            <View key={row.name}>
+              {rank === PROMOTE + 1 && <ZoneDivider label="PROMOTION ZONE" color={colors.primary} />}
+              {rank === rows.length - RELEGATE + 1 && <ZoneDivider label="RELEGATION ZONE" color={colors.danger} />}
+              <View style={[styles.row, me && styles.rowMe]}>
+                <Text
+                  style={[
+                    styles.rank,
+                    promote && { color: colors.primary },
+                    relegate && { color: colors.danger },
+                  ]}
+                >
+                  {rank}
+                </Text>
+                <Text style={[styles.name, me && { fontWeight: '900' }]}>{row.name}</Text>
+                <Text style={styles.xp}>{row.xp} XP</Text>
+                {rank <= 3 && <Text style={styles.medal}>{['🥇', '🥈', '🥉'][rank - 1]}</Text>}
+              </View>
+            </View>
+          );
+        })}
         <Text style={styles.note}>
-          Team leagues turn security into a culture sport — exactly what a manager dashboard
-          rewards in the B2B tier.
+          {mode === 'individual'
+            ? 'Earn XP in lessons to climb. Standings update live from your weekly XP.'
+            : 'Team leagues turn security into a culture sport — the B2B manager dashboard rewards it.'}
         </Text>
       </ScrollView>
+    </View>
+  );
+}
+
+function ZoneDivider({ label, color }: { label: string; color: string }) {
+  return (
+    <View style={styles.zoneRow}>
+      <View style={[styles.zoneLine, { backgroundColor: color }]} />
+      <Text style={[styles.zoneLabel, { color }]}>{label}</Text>
+      <View style={[styles.zoneLine, { backgroundColor: color }]} />
     </View>
   );
 }
@@ -90,10 +133,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   rowMe: { borderColor: colors.primary, borderWidth: 2, backgroundColor: '#E6F7F0' },
-  rowTop: { backgroundColor: '#FFFDF5' },
   rank: { width: 22, fontSize: font.body, fontWeight: '800', color: colors.textMuted },
   name: { flex: 1, fontSize: font.body, fontWeight: '700', color: colors.text },
   xp: { fontSize: font.small, fontWeight: '800', color: colors.xp },
   medal: { fontSize: 18 },
+  zoneRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 6 },
+  zoneLine: { flex: 1, height: 1.5, borderRadius: 1 },
+  zoneLabel: { fontSize: font.tiny, fontWeight: '900', letterSpacing: 1 },
   note: { marginTop: 12, fontSize: font.small, color: colors.textMuted, lineHeight: 19, fontStyle: 'italic' },
 });

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { Hud } from '../components/hud/Hud';
 import { SparkAvatar } from '../components/brand/SparkAvatar';
+import { DailyQuests } from '../components/quests/DailyQuests';
 import { Button } from '../components/ui/Button';
 import { PHISHING_LESSON } from '../data/phishingLesson';
 import { PATH_NODES } from '../data/lessons';
@@ -67,7 +68,10 @@ export function PathScreen({ onStartLesson }: Props) {
           </View>
         </View>
 
-        {/* Today's threat — daily quest */}
+        {/* Daily quests */}
+        <DailyQuests />
+
+        {/* Today's threat — featured lesson */}
         <Pressable style={styles.quest} onPress={() => onStartLesson(PHISHING_LESSON.id)}>
           <View style={styles.questIconWrap}>
             <Text style={styles.questIcon}>⚡</Text>

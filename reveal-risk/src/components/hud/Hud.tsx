@@ -7,6 +7,7 @@ import { useGameStore } from '../../store/useGameStore';
 export function Hud() {
   const streak = useGameStore((s) => s.streak);
   const hearts = useGameStore((s) => s.hearts);
+  const gems = useGameStore((s) => s.gems);
   const level = useGameStore((s) => s.level());
   const xpInto = useGameStore((s) => s.xpIntoLevel());
   const xpFor = useGameStore((s) => s.xpForLevel());
@@ -35,6 +36,7 @@ export function Hud() {
         </View>
       </View>
 
+      <Stat icon="💎" value={String(gems)} tint={colors.gem} label="gems" />
       <Stat icon="❤️" value={String(hearts)} tint={colors.heart} label="shields" />
     </View>
   );
