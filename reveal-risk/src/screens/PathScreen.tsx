@@ -23,6 +23,7 @@ export function PathScreen({ onStartLesson }: Props) {
   const dayOffset = useGameStore((s) => s.dayOffset);
   const completed = useGameStore((s) => s.completedLessons);
   const focusDomain = useGameStore((s) => s.focusDomain);
+  const missedCount = useGameStore((s) => s.missedChallenges.length);
 
   const today = new Date();
   today.setDate(today.getDate() + dayOffset);
@@ -133,6 +134,20 @@ export function PathScreen({ onStartLesson }: Props) {
           })}
         </View>
 
+        {/* Spaced-repetition review */}
+        {missedCount > 0 && (
+          <Pressable style={styles.practice} onPress={() => onStartLesson('review')}>
+            <Text style={styles.practiceIcon}>🧠</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.practiceTitle}>Practice your weak spots</Text>
+              <Text style={styles.practiceSub}>
+                {missedCount} question{missedCount > 1 ? 's' : ''} to review · earn it back
+              </Text>
+            </View>
+            <Text style={styles.practiceChevron}>▶</Text>
+          </Pressable>
+        )}
+
         {/* Future threat domains (roadmap) */}
         <Text style={styles.railLabel}>MORE DOMAINS — COMING SOON</Text>
         <View style={styles.rail}>
@@ -240,6 +255,22 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   pillText: { color: '#fff', fontSize: font.tiny, fontWeight: '900', letterSpacing: 0.5 },
+  practice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 20,
+    padding: 14,
+    borderRadius: radius.lg,
+    backgroundColor: '#EEF1FE',
+    borderWidth: 1,
+    borderColor: colors.xp,
+  },
+  practiceIcon: { fontSize: 26 },
+  practiceTitle: { fontSize: font.body, fontWeight: '800', color: colors.text },
+  practiceSub: { fontSize: font.tiny, color: colors.textMuted, fontWeight: '600', marginTop: 2 },
+  practiceChevron: { color: colors.xp, fontSize: 14, fontWeight: '800' },
   railLabel: { fontSize: font.tiny, fontWeight: '800', color: colors.textMuted, letterSpacing: 1, marginTop: 22, marginHorizontal: 16, marginBottom: 8 },
   rail: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16 },
   railCard: {

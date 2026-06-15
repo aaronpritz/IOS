@@ -23,7 +23,8 @@ export function ResultsScreen({ summary, onDone }: Props) {
   const level = useGameStore((s) => s.level());
   useEffect(() => {
     const store = useGameStore.getState();
-    store.markLessonComplete(summary.lessonId);
+    // Review sessions don't count as path-lesson completions.
+    if (summary.lessonId !== 'review') store.markLessonComplete(summary.lessonId);
     setOutcome(store.completeSession(summary.xpEarned, summary.correct === summary.total));
   }, []);
 

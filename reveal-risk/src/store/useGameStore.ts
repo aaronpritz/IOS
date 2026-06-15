@@ -80,6 +80,8 @@ interface GameState {
   badges: string[];
   /** Lesson ids the user has completed (drives path unlocks + domain mastery). */
   completedLessons: string[];
+  /** Challenge ids answered incorrectly — resurfaced in spaced-repetition review. */
+  missedChallenges: string[];
   /** First-run onboarding completed + the chosen preferences. */
   onboarded: boolean;
   focusDomain: string | null;
@@ -112,6 +114,8 @@ interface GameState {
   refillHearts: () => void;
   completeSession: (xpEarned: number, perfect?: boolean) => SessionResult;
   markLessonComplete: (lessonId: string) => void;
+  addMissedChallenge: (id: string) => void;
+  removeMissedChallenge: (id: string) => void;
   completeOnboarding: (prefs: { focusDomain: string; dailyGoal: number; reminderTime: string }) => void;
   buyStreakFreeze: () => boolean;
   buyHeartRefill: () => boolean;
@@ -130,6 +134,7 @@ export const useGameStore = create<GameState>()(
       hearts: MAX_HEARTS,
       badges: [],
       completedLessons: [],
+      missedChallenges: [],
       onboarded: false,
       focusDomain: null,
       dailyGoal: 1,
@@ -163,6 +168,12 @@ export const useGameStore = create<GameState>()(
             ? s
             : { completedLessons: [...s.completedLessons, lessonId] }
         ),
+
+      addMissedChallenge: (id) =>
+        set((s) => (s.missedChallenges.includes(id) ? s : { missedChallenges: [...s.missedChallenges, id] })),
+
+      removeMissedChallenge: (id) =>
+        set((s) => ({ missedChallenges: s.missedChallenges.filter((x) => x !== id) })),
 
       completeOnboarding: (prefs) =>
         set({
@@ -280,6 +291,7 @@ export const useGameStore = create<GameState>()(
           hearts: MAX_HEARTS,
           badges: [],
           completedLessons: [],
+          missedChallenges: [],
           onboarded: false,
           focusDomain: null,
           dailyGoal: 1,
@@ -308,6 +320,7 @@ export const useGameStore = create<GameState>()(
         hearts: s.hearts,
         badges: s.badges,
         completedLessons: s.completedLessons,
+        missedChallenges: s.missedChallenges,
         onboarded: s.onboarded,
         focusDomain: s.focusDomain,
         dailyGoal: s.dailyGoal,

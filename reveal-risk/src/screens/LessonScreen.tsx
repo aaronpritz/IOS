@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { Button } from '../components/ui/Button';
@@ -26,10 +26,13 @@ interface Props {
 
 /** The full-screen lesson player that drives the challenge sequence. */
 export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
-  const lesson = getLesson(lessonId);
+  // Capture once per lesson — a review lesson is built from the (changing) miss set.
+  const lesson = useMemo(() => getLesson(lessonId), [lessonId]);
   const hearts = useGameStore((s) => s.hearts);
   const loseHeart = useGameStore((s) => s.loseHeart);
   const refillHearts = useGameStore((s) => s.refillHearts);
+  const addMissed = useGameStore((s) => s.addMissedChallenge);
+  const removeMissed = useGameStore((s) => s.removeMissedChallenge);
 
   const [index, setIndex] = useState(0);
   const [xpEarned, setXpEarned] = useState(0);
@@ -43,10 +46,13 @@ export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
   function handleResult(r: { isCorrect: boolean; mistakes: number }) {
     setResult(r);
     r.isCorrect ? feedbackCorrect() : feedbackWrong();
+    // Spaced repetition: track misses, clear them once answered correctly.
     if (r.isCorrect) {
+      removeMissed(challenge.id);
       setCorrect((c) => c + 1);
       setXpEarned((x) => x + challenge.xp);
     } else {
+      addMissed(challenge.id);
       setXpEarned((x) => x + Math.round(challenge.xp / 2));
     }
     for (let i = 0; i < r.mistakes; i++) loseHeart();
