@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { Button } from '../components/ui/Button';
@@ -7,6 +7,7 @@ import { Mcq } from '../components/challenges/Mcq';
 import { BranchingScenario } from '../components/challenges/BranchingScenario';
 import { PasswordStrength } from '../components/challenges/PasswordStrength';
 import { getLesson } from '../data/lessons';
+import { feedbackCorrect, feedbackWrong } from '../lib/feedback';
 import { useGameStore } from '../store/useGameStore';
 
 export interface LessonSummary {
@@ -25,10 +26,13 @@ interface Props {
 
 /** The full-screen lesson player that drives the challenge sequence. */
 export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
-  const lesson = getLesson(lessonId);
+  // Capture once per lesson — a review lesson is built from the (changing) miss set.
+  const lesson = useMemo(() => getLesson(lessonId), [lessonId]);
   const hearts = useGameStore((s) => s.hearts);
   const loseHeart = useGameStore((s) => s.loseHeart);
   const refillHearts = useGameStore((s) => s.refillHearts);
+  const addMissed = useGameStore((s) => s.addMissedChallenge);
+  const removeMissed = useGameStore((s) => s.removeMissedChallenge);
 
   const [index, setIndex] = useState(0);
   const [xpEarned, setXpEarned] = useState(0);
@@ -41,10 +45,14 @@ export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
 
   function handleResult(r: { isCorrect: boolean; mistakes: number }) {
     setResult(r);
+    r.isCorrect ? feedbackCorrect() : feedbackWrong();
+    // Spaced repetition: track misses, clear them once answered correctly.
     if (r.isCorrect) {
+      removeMissed(challenge.id);
       setCorrect((c) => c + 1);
       setXpEarned((x) => x + challenge.xp);
     } else {
+      addMissed(challenge.id);
       setXpEarned((x) => x + Math.round(challenge.xp / 2));
     }
     for (let i = 0; i < r.mistakes; i++) loseHeart();
@@ -140,17 +148,19 @@ function FeedbackFooter({
   isLast: boolean;
   onNext: () => void;
 }) {
+  // JS-driven (useNativeDriver:false) + opacity kept at 1 so the footer is always
+  // visible/tappable even if the animation no-ops — never gate visibility on it.
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.spring(anim, { toValue: 1, friction: 8, tension: 70, useNativeDriver: true }).start();
+    Animated.spring(anim, { toValue: 1, friction: 8, tension: 70, useNativeDriver: false }).start();
   }, [anim]);
-  const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [60, 0] });
+  const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
 
   return (
     <Animated.View
       style={[
         styles.footer,
-        { backgroundColor: isCorrect ? '#E6F7F0' : '#FDECEE', opacity: anim, transform: [{ translateY }] },
+        { backgroundColor: isCorrect ? '#E6F7F0' : '#FDECEE', transform: [{ translateY }] },
       ]}
     >
       <Text style={[styles.footerTitle, { color: isCorrect ? colors.primaryDark : colors.danger }]}>

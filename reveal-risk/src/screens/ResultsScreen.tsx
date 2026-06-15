@@ -23,8 +23,9 @@ export function ResultsScreen({ summary, onDone }: Props) {
   const level = useGameStore((s) => s.level());
   useEffect(() => {
     const store = useGameStore.getState();
-    store.markLessonComplete(summary.lessonId);
-    setOutcome(store.completeSession(summary.xpEarned));
+    // Review sessions don't count as path-lesson completions.
+    if (summary.lessonId !== 'review') store.markLessonComplete(summary.lessonId);
+    setOutcome(store.completeSession(summary.xpEarned, summary.correct === summary.total));
   }, []);
 
   // Pick the celebration "cutscene" for a milestone, if any.
@@ -45,7 +46,7 @@ export function ResultsScreen({ summary, onDone }: Props) {
   const accuracy = Math.round((summary.correct / summary.total) * 100);
   const reward = outcome.newBadge
     ? badgeMeta(outcome.newBadge)
-    : { icon: '💎', name: '+5 Bonus Gems' };
+    : { icon: '💎', name: `+${outcome.gemsEarned} Gems` };
 
   return (
     <View style={styles.container}>
@@ -57,6 +58,7 @@ export function ResultsScreen({ summary, onDone }: Props) {
           {outcome.streakIncreased ? `Day ${outcome.streak} streak!` : 'Streak kept!'}
         </Text>
         {outcome.leveledUp && <Text style={styles.levelUp}>⭐ Level up!</Text>}
+        {outcome.freezeUsed && <Text style={styles.freeze}>🧊 Streak freeze used — streak saved!</Text>}
       </View>
 
       <View style={styles.statsRow}>
@@ -102,6 +104,7 @@ const styles = StyleSheet.create({
   streakNum: { fontSize: 56, fontWeight: '900', color: colors.streak, marginTop: -6 },
   streakLabel: { fontSize: font.h2, fontWeight: '800', color: colors.text },
   levelUp: { marginTop: 8, fontSize: font.h3, fontWeight: '800', color: colors.xp },
+  freeze: { marginTop: 6, fontSize: font.small, fontWeight: '700', color: colors.gem },
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
   stat: {
     flex: 1,

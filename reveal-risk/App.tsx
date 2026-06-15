@@ -7,12 +7,13 @@ import { LessonScreen, LessonSummary } from './src/screens/LessonScreen';
 import { ResultsScreen } from './src/screens/ResultsScreen';
 import { LeaguesScreen } from './src/screens/LeaguesScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { ShopScreen } from './src/screens/ShopScreen';
 import { ManagerDashboard } from './src/screens/ManagerDashboard';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { Onboarding } from './src/screens/Onboarding';
 import { useGameStore } from './src/store/useGameStore';
 
-type Tab = 'learn' | 'leagues' | 'profile';
+type Tab = 'learn' | 'leagues' | 'shop' | 'profile';
 type Flow = 'home' | 'lesson' | 'results';
 type ViewMode = 'employee' | 'manager';
 
@@ -70,6 +71,7 @@ export default function App() {
                     <PathScreen onStartLesson={startLesson} />
                   )}
                   {flow === 'home' && tab === 'leagues' && <LeaguesScreen />}
+                  {flow === 'home' && tab === 'shop' && <ShopScreen />}
                   {flow === 'home' && tab === 'profile' && <ProfileScreen />}
 
                   {flow === 'lesson' && (
@@ -93,6 +95,7 @@ export default function App() {
               <View style={styles.tabbar}>
                 <TabBtn icon="📚" label="Learn" active={tab === 'learn'} onPress={() => setTab('learn')} />
                 <TabBtn icon="🏆" label="Leagues" active={tab === 'leagues'} onPress={() => setTab('leagues')} />
+                <TabBtn icon="🛒" label="Shop" active={tab === 'shop'} onPress={() => setTab('shop')} />
                 <TabBtn icon="🧑‍💻" label="Profile" active={tab === 'profile'} onPress={() => setTab('profile')} />
               </View>
             )}
