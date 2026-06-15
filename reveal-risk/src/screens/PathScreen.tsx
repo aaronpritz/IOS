@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { Hud } from '../components/hud/Hud';
@@ -21,17 +21,27 @@ export function PathScreen({ onStartLesson }: Props) {
   const lastActive = useGameStore((s) => s.lastActiveDate);
   const dayOffset = useGameStore((s) => s.dayOffset);
   const completed = useGameStore((s) => s.completedLessons);
+  const focusDomain = useGameStore((s) => s.focusDomain);
 
   const today = new Date();
   today.setDate(today.getDate() + dayOffset);
   const todayKey = today.toISOString().slice(0, 10);
   const doneToday = lastActive === todayKey;
 
-  // The next actionable node = first real lesson not yet completed.
-  const currentIndex = PATH_NODES.findIndex((n) => n.lessonId && !completed.includes(n.lessonId));
-  const currentLessonId = currentIndex >= 0 ? PATH_NODES[currentIndex].lessonId! : PHISHING_LESSON.id;
+  // Prioritize the user's chosen focus domain (stable sort keeps the rest in order).
+  const nodes = useMemo(() => {
+    if (!focusDomain) return PATH_NODES;
+    return [...PATH_NODES].sort(
+      (a, b) => (a.domainKey === focusDomain ? 0 : 1) - (b.domainKey === focusDomain ? 0 : 1)
+    );
+  }, [focusDomain]);
+  const focusName = THREAT_DOMAINS.find((d) => d.key === focusDomain)?.name;
 
-  const realNodes = PATH_NODES.filter((n) => n.lessonId);
+  // The next actionable node = first real lesson not yet completed.
+  const currentIndex = nodes.findIndex((n) => n.lessonId && !completed.includes(n.lessonId));
+  const currentLessonId = currentIndex >= 0 ? nodes[currentIndex].lessonId! : PHISHING_LESSON.id;
+
+  const realNodes = nodes.filter((n) => n.lessonId);
   const doneCount = realNodes.filter((n) => completed.includes(n.lessonId!)).length;
 
   function nodeState(node: (typeof PATH_NODES)[number], i: number): 'done' | 'current' | 'locked' {
@@ -73,7 +83,7 @@ export function PathScreen({ onStartLesson }: Props) {
         {/* Path header with overall progress */}
         <View style={styles.pathHeader}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.pathKicker}>YOUR PATH</Text>
+            <Text style={styles.pathKicker}>YOUR PATH{focusName ? ` · FOCUS: ${focusName.toUpperCase()}` : ''}</Text>
             <Text style={styles.pathTitle}>Security Basics</Text>
           </View>
           <Text style={styles.pathProgress}>
@@ -83,7 +93,7 @@ export function PathScreen({ onStartLesson }: Props) {
 
         {/* The winding path of lesson nodes */}
         <View style={styles.path}>
-          {PATH_NODES.map((node, i) => {
+          {nodes.map((node, i) => {
             const offset = (i % 2 === 0 ? -1 : 1) * 46;
             const state = nodeState(node, i);
             const isCurrent = state === 'current';
