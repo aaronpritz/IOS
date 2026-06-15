@@ -7,6 +7,7 @@ import { Mcq } from '../components/challenges/Mcq';
 import { BranchingScenario } from '../components/challenges/BranchingScenario';
 import { PasswordStrength } from '../components/challenges/PasswordStrength';
 import { getLesson } from '../data/lessons';
+import { feedbackCorrect, feedbackWrong } from '../lib/feedback';
 import { useGameStore } from '../store/useGameStore';
 
 export interface LessonSummary {
@@ -41,6 +42,7 @@ export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
 
   function handleResult(r: { isCorrect: boolean; mistakes: number }) {
     setResult(r);
+    r.isCorrect ? feedbackCorrect() : feedbackWrong();
     if (r.isCorrect) {
       setCorrect((c) => c + 1);
       setXpEarned((x) => x + challenge.xp);

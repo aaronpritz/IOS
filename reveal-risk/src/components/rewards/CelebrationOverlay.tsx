@@ -4,6 +4,7 @@ import { colors, font } from '../../theme/tokens';
 import { Button } from '../ui/Button';
 import { SparkAvatar } from '../brand/SparkAvatar';
 import { CELEBRATION_SPARK_URL } from '../../data/assets';
+import { feedbackCelebrate } from '../../lib/feedback';
 
 const CONFETTI_COLORS = [colors.streak, colors.primary, colors.xp, colors.gem, colors.heart, colors.warn];
 
@@ -56,6 +57,7 @@ export function CelebrationOverlay({ title, subtitle, onDone }: Props) {
   const [imgFailed, setImgFailed] = useState(false);
 
   useEffect(() => {
+    feedbackCelebrate();
     Animated.parallel([
       Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }),
       Animated.spring(scale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: true }),
