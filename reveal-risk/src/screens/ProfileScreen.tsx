@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { useGameStore, badgeMeta } from '../store/useGameStore';
 import { THREAT_DOMAINS } from '../data/domains';
 import { lessonsInDomain } from '../data/lessons';
+import { enableDailyReminder, ReminderResult } from '../lib/notifications';
 
 /** Stats, badges, and per-domain mastery — plus the per-user Human-Risk Score (B2B). */
 export function ProfileScreen() {
@@ -48,6 +49,7 @@ export function ProfileScreen() {
           <PlanItem icon="📅" label="Daily goal" value={`${dailyGoal}/day`} />
           <PlanItem icon="⏰" label="Reminder" value={reminderLabel} />
         </View>
+        <ReminderButton reminderTime={reminderTime} />
       </View>
 
       {/* Human-Risk Score — the B2B outcome metric */}
@@ -109,6 +111,33 @@ function Card({ label, value, icon }: { label: string; value: string; icon: stri
   );
 }
 
+function ReminderButton({ reminderTime }: { reminderTime: string | null }) {
+  const [status, setStatus] = useState<ReminderResult | 'loading' | null>(null);
+
+  const messages: Record<ReminderResult, string> = {
+    scheduled: '✅ Daily reminder scheduled',
+    web: '✅ Browser notifications on (native build adds daily scheduling)',
+    denied: '🔕 Permission denied — enable notifications in settings',
+    unsupported: 'ℹ️ Not supported in this browser — works in the mobile app',
+  };
+
+  async function onPress() {
+    setStatus('loading');
+    const r = await enableDailyReminder(reminderTime);
+    setStatus(r);
+  }
+
+  return (
+    <View style={{ marginTop: 14 }}>
+      <Pressable onPress={onPress} style={styles.reminderBtn}>
+        <Text style={styles.reminderBtnText}>🔔 Turn on daily reminder</Text>
+      </Pressable>
+      {status && status !== 'loading' && <Text style={styles.reminderStatus}>{messages[status]}</Text>}
+      {status === 'loading' && <Text style={styles.reminderStatus}>Requesting…</Text>}
+    </View>
+  );
+}
+
 function PlanItem({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <View style={styles.planItem}>
@@ -139,6 +168,9 @@ const styles = StyleSheet.create({
   planIcon: { fontSize: 20 },
   planValue: { fontSize: font.body, fontWeight: '800', color: colors.text },
   planItemLabel: { fontSize: font.tiny, color: colors.textMuted, fontWeight: '600' },
+  reminderBtn: { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, paddingVertical: 11, alignItems: 'center' },
+  reminderBtnText: { fontSize: font.small, fontWeight: '800', color: colors.navy },
+  reminderStatus: { fontSize: font.tiny, color: colors.textMuted, textAlign: 'center', marginTop: 8, fontWeight: '600' },
   riskCard: { backgroundColor: colors.navy, borderRadius: radius.lg, padding: 18 },
   riskLabel: { color: 'rgba(255,255,255,0.7)', fontSize: font.tiny, fontWeight: '800', letterSpacing: 1 },
   riskValue: { color: '#fff', fontSize: 40, fontWeight: '900', marginTop: 2 },

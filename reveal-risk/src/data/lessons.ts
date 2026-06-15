@@ -3,6 +3,7 @@ import { PHISHING_LESSON } from './phishingLesson';
 import { PASSWORDS_LESSON } from './passwordsLesson';
 import { FAKE_LOGIN_LESSON } from './fakeLoginLesson';
 import { DEEPFAKE_LESSON } from './deepfakeLesson';
+import { SOCIAL_ENG_LESSON } from './socialEngLesson';
 
 /** All lessons keyed by id. The backend serves these from the `lessons` table. */
 export const LESSONS: Record<string, Lesson> = {
@@ -10,6 +11,7 @@ export const LESSONS: Record<string, Lesson> = {
   [PASSWORDS_LESSON.id]: PASSWORDS_LESSON,
   [FAKE_LOGIN_LESSON.id]: FAKE_LOGIN_LESSON,
   [DEEPFAKE_LESSON.id]: DEEPFAKE_LESSON,
+  [SOCIAL_ENG_LESSON.id]: SOCIAL_ENG_LESSON,
 };
 
 export function getLesson(id: string): Lesson {
@@ -30,6 +32,7 @@ export const PATH_NODES: JourneyNode[] = [
   { id: 'n2', lessonId: PASSWORDS_LESSON.id, title: 'Strong Passwords', icon: '🔑', domainKey: 'passwords' },
   { id: 'n3', lessonId: FAKE_LOGIN_LESSON.id, title: 'Fake Login Pages', icon: '🪪', domainKey: 'phishing' },
   { id: 'n4', lessonId: DEEPFAKE_LESSON.id, title: 'Deepfake Voices', icon: '🤖', domainKey: 'ai_deepfakes' },
+  { id: 'n5', lessonId: SOCIAL_ENG_LESSON.id, title: 'Social Engineering', icon: '🎭', domainKey: 'social_eng' },
 ];
 
 /** Lessons that belong to each domain (for mastery %). */
