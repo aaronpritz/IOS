@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { colors, radius, font } from '../../theme/tokens';
 import { useGameStore } from '../../store/useGameStore';
 
@@ -12,9 +12,16 @@ export function Hud() {
   const xpFor = useGameStore((s) => s.xpForLevel());
   const pct = Math.max(0, Math.min(1, xpInto / xpFor));
 
+  // Animate the XP bar fill toward the current percentage.
+  const fillAnim = useRef(new Animated.Value(pct)).current;
+  useEffect(() => {
+    Animated.timing(fillAnim, { toValue: pct, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+  }, [pct, fillAnim]);
+  const fillWidth = fillAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
+
   return (
     <View style={styles.row}>
-      <Stat icon="🔥" value={String(streak)} tint={colors.streak} label="streak" />
+      <Stat icon="🔥" value={String(streak)} tint={colors.streak} label="streak" pulse={streak > 0} />
 
       <View style={styles.xpWrap}>
         <View style={styles.xpHeader}>
@@ -24,7 +31,7 @@ export function Hud() {
           </Text>
         </View>
         <View style={styles.track}>
-          <View style={[styles.fill, { width: `${pct * 100}%` }]} />
+          <Animated.View style={[styles.fill, { width: fillWidth }]} />
         </View>
       </View>
 
@@ -33,10 +40,23 @@ export function Hud() {
   );
 }
 
-function Stat({ icon, value, tint, label }: { icon: string; value: string; tint: string; label: string }) {
+function Stat({ icon, value, tint, label, pulse }: { icon: string; value: string; tint: string; label: string; pulse?: boolean }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!pulse) return;
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.18, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [pulse, scale]);
+
   return (
     <View style={styles.stat} accessibilityLabel={`${value} ${label}`}>
-      <Text style={styles.statIcon}>{icon}</Text>
+      <Animated.Text style={[styles.statIcon, { transform: [{ scale }] }]}>{icon}</Animated.Text>
       <Text style={[styles.statValue, { color: tint }]}>{value}</Text>
     </View>
   );

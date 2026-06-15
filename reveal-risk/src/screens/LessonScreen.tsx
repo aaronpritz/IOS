@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { colors, radius, font } from '../theme/tokens';
 import { Button } from '../components/ui/Button';
 import { SpotThePhish } from '../components/challenges/SpotThePhish';
@@ -114,19 +114,53 @@ export function LessonScreen({ lessonId, onComplete, onExit }: Props) {
 
       {/* Feedback footer */}
       {result && (
-        <View style={[styles.footer, { backgroundColor: result.isCorrect ? '#E6F7F0' : '#FDECEE' }]}>
-          <Text style={[styles.footerTitle, { color: result.isCorrect ? colors.primaryDark : colors.danger }]}>
-            {result.isCorrect ? '✅ Nice — clean catch!' : `⚠️ ${result.mistakes} miss${result.mistakes === 1 ? '' : 'es'} · ${result.mistakes} shield${result.mistakes === 1 ? '' : 's'} lost`}
-          </Text>
-          <Text style={styles.footerExplain}>{challenge.explanation}</Text>
-          <Button
-            label={index + 1 >= lesson.challenges.length ? 'Finish' : 'Continue'}
-            variant={result.isCorrect ? 'primary' : 'danger'}
-            onPress={next}
-          />
-        </View>
+        <FeedbackFooter
+          isCorrect={result.isCorrect}
+          mistakes={result.mistakes}
+          explanation={challenge.explanation}
+          isLast={index + 1 >= lesson.challenges.length}
+          onNext={next}
+        />
       )}
     </View>
+  );
+}
+
+/** Animated correct/incorrect feedback that slides up when an answer is checked. */
+function FeedbackFooter({
+  isCorrect,
+  mistakes,
+  explanation,
+  isLast,
+  onNext,
+}: {
+  isCorrect: boolean;
+  mistakes: number;
+  explanation: string;
+  isLast: boolean;
+  onNext: () => void;
+}) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(anim, { toValue: 1, friction: 8, tension: 70, useNativeDriver: true }).start();
+  }, [anim]);
+  const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [60, 0] });
+
+  return (
+    <Animated.View
+      style={[
+        styles.footer,
+        { backgroundColor: isCorrect ? '#E6F7F0' : '#FDECEE', opacity: anim, transform: [{ translateY }] },
+      ]}
+    >
+      <Text style={[styles.footerTitle, { color: isCorrect ? colors.primaryDark : colors.danger }]}>
+        {isCorrect
+          ? '✅ Nice — clean catch!'
+          : `⚠️ ${mistakes} miss${mistakes === 1 ? '' : 'es'} · ${mistakes} shield${mistakes === 1 ? '' : 's'} lost`}
+      </Text>
+      <Text style={styles.footerExplain}>{explanation}</Text>
+      <Button label={isLast ? 'Finish' : 'Continue'} variant={isCorrect ? 'primary' : 'danger'} onPress={onNext} />
+    </Animated.View>
   );
 }
 
