@@ -5,6 +5,7 @@ import { useGameStore, badgeMeta } from '../store/useGameStore';
 import { THREAT_DOMAINS } from '../data/domains';
 import { lessonsInDomain } from '../data/lessons';
 import { enableDailyReminder, ReminderResult } from '../lib/notifications';
+import { Squad } from '../components/social/Squad';
 
 /** Stats, badges, and per-domain mastery — plus the per-user Human-Risk Score (B2B). */
 export function ProfileScreen() {
@@ -51,6 +52,9 @@ export function ProfileScreen() {
         </View>
         <ReminderButton reminderTime={reminderTime} />
       </View>
+
+      {/* Social — teammate streaks */}
+      <Squad />
 
       {/* Human-Risk Score — the B2B outcome metric */}
       <View style={styles.riskCard}>
