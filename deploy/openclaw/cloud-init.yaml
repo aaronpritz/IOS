@@ -1,0 +1,32 @@
+#cloud-config
+# Hetzner Cloud user-data for a one-paste OpenClaw server.
+#
+# Paste this into the "Cloud config" box when creating the server in the
+# Hetzner Cloud Console (or pass via `hcloud server create --user-data-from-file`).
+#
+# It prepares the box (updates, Docker, firewall, repo clone). Onboarding is
+# interactive, so after the server boots, SSH in and run:
+#   cd /opt/openclaw && ./scripts/docker/setup.sh
+#
+# Check progress after boot with: tail -f /var/log/cloud-init-output.log
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - git
+  - curl
+  - ca-certificates
+  - ufw
+
+runcmd:
+  # Docker
+  - curl -fsSL https://get.docker.com | sh
+  - systemctl enable --now docker
+  # OpenClaw repo + persistent state (container runs as uid/gid 1000)
+  - git clone https://github.com/openclaw/openclaw.git /opt/openclaw
+  - mkdir -p /root/.openclaw/workspace
+  - chown -R 1000:1000 /root/.openclaw
+  # Firewall: SSH only; gateway port 18789 stays loopback-only
+  - ufw allow OpenSSH
+  - ufw --force enable
