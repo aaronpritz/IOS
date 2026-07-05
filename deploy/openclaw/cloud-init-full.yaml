@@ -1,0 +1,57 @@
+#cloud-config
+# Fully-automated OpenClaw bootstrap for Hetzner Cloud.
+#
+# Unlike cloud-init.yaml (which only preps the box), this variant brings the
+# OpenClaw gateway all the way up on first boot using the prebuilt image:
+#   - installs Docker, clones openclaw/openclaw to /opt/openclaw
+#   - generates a gateway token + keyring password into /opt/openclaw/.env
+#   - starts the gateway loopback-only on 127.0.0.1:18789
+#   - locks the firewall down to SSH only
+#
+# After boot, finish configuration (LLM key, channels) from your laptop:
+#   ssh -N -L 18789:127.0.0.1:18789 root@SERVER_IP     # tunnel
+#   ssh root@SERVER_IP 'cat /root/openclaw-dashboard.txt'  # tokenized URL
+#
+# Progress log on the server: tail -f /var/log/cloud-init-output.log
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - git
+  - curl
+  - ca-certificates
+  - ufw
+
+runcmd:
+  # Docker
+  - curl -fsSL https://get.docker.com | sh
+  - systemctl enable --now docker
+  # OpenClaw repo + persistent state (container runs as uid/gid 1000)
+  - git clone https://github.com/openclaw/openclaw.git /opt/openclaw
+  - mkdir -p /root/.openclaw/workspace
+  - chown -R 1000:1000 /root/.openclaw
+  # Environment: prebuilt image, generated secrets, loopback-only gateway
+  - |
+    cd /opt/openclaw
+    GW_TOKEN=$(openssl rand -hex 32)
+    cat > .env <<EOF
+    OPENCLAW_IMAGE=ghcr.io/openclaw/openclaw:latest
+    OPENCLAW_GATEWAY_TOKEN=${GW_TOKEN}
+    OPENCLAW_GATEWAY_BIND=loopback
+    OPENCLAW_GATEWAY_PORT=18789
+    OPENCLAW_CONFIG_DIR=/root/.openclaw
+    OPENCLAW_WORKSPACE_DIR=/root/.openclaw/workspace
+    GOG_KEYRING_PASSWORD=$(openssl rand -hex 24)
+    EOF
+    chmod 600 .env
+    echo "http://127.0.0.1:18789/#token=${GW_TOKEN}" > /root/openclaw-dashboard.txt
+    chmod 600 /root/openclaw-dashboard.txt
+  # Pull image and start the gateway
+  - cd /opt/openclaw && docker compose pull openclaw-gateway || true
+  - cd /opt/openclaw && docker compose up -d openclaw-gateway
+  # Firewall: SSH only; gateway port 18789 stays loopback-only
+  - ufw allow OpenSSH
+  - ufw --force enable
+
+final_message: "OpenClaw bootstrap complete after $UPTIME seconds. Dashboard URL: /root/openclaw-dashboard.txt (access via SSH tunnel)."

@@ -9,11 +9,35 @@ Cloud VPS.
 | File | Purpose |
 |---|---|
 | `setup-openclaw.sh` | One-shot install script — run on the fresh VPS as root |
-| `cloud-init.yaml` | Optional Hetzner user-data that pre-installs Docker + clones the repo at first boot |
+| `cloud-init.yaml` | Hetzner user-data that pre-installs Docker + clones the repo at first boot |
+| `cloud-init-full.yaml` | Fully-automated user-data: gateway is up and running after first boot |
+| `provision-hetzner.sh` | Creates the server + firewall via the Hetzner Cloud API (curl + jq, no CLI) |
 
 Based on the official guide: <https://docs.openclaw.ai/install/hetzner>
 
 ---
+
+## 0. Hands-off path: provision via the Hetzner API
+
+If you'd rather not click through the console (or want Claude Code to do the
+provisioning for you over HTTPS), use the API script:
+
+```bash
+export HCLOUD_TOKEN=...        # Hetzner Console → project → Security → API Tokens (Read & Write)
+SSH_KEY_NAME=my-key bash deploy/openclaw/provision-hetzner.sh
+```
+
+It creates an SSH-only Cloud Firewall, boots a CPX21 (Ubuntu 24.04, Ashburn by
+default) with `cloud-init-full.yaml` as user-data, and prints the server IP.
+About 5 minutes after boot the OpenClaw gateway is running loopback-only; the
+only manual step left is opening the dashboard through an SSH tunnel to enter
+your LLM API key and connect channels (see step 3 below).
+
+Running this from a Claude Code cloud session requires two environment
+settings at claude.ai/code: add `HCLOUD_TOKEN` as an environment variable and
+allow the domain `api.hetzner.cloud` in the network policy.
+
+To provision manually instead, continue below.
 
 ## 1. Create the server
 
